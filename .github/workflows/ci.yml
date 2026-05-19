@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  format:
+    name: Prettier — Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Check formatting
+        run: npm run format:check
+
+  frontend:
+    name: Frontend — Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: apps/frontend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: apps/frontend
+
+      - name: Build
+        run: npm run build:prod
+        working-directory: apps/frontend
+
+  backend:
+    name: Backend — Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: apps/backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: apps/backend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: apps/backend
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: apps/backend
+
+      - name: Build
+        run: npm run build
+        working-directory: apps/backend

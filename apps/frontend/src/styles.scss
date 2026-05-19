@@ -1,0 +1,42 @@
+// WorkSpace2K — Global Styles
+// scss-library is resolved via angular.json stylePreprocessorOptions.includePaths
+
+@use 'abstracts' as *;
+@use 'base';
+
+// ── WorkSpace2K Brand Token Overrides ───────────────────────────────────────
+:root {
+  --primary-color: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+
+  --secondary-color: #10b981;
+  --secondary-dark: #059669;
+  --secondary-light: #34d399;
+
+  --accent-color: #f59e0b;
+
+  --sidebar-width: 260px;
+  --header-height: 60px;
+}
+
+[data-theme='dark'] {
+  --background-primary: #0f1117;
+  --background-secondary: #1a1d2e;
+  --background-tertiary: #252840;
+  --border-color: #2e3250;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}

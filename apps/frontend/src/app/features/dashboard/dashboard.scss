@@ -1,0 +1,8 @@
+.dashboard {
+  padding: var(--space-4);
+
+  &__subtitle {
+    color: var(--text-secondary);
+    margin-top: var(--space-2);
+  }
+}

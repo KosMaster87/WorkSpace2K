@@ -1,0 +1,17 @@
+# Dev override — nur DB lokal, frontend + backend laufen per ng serve / ts-node
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: ws2k-db-dev
+    restart: unless-stopped
+    ports:
+      - "5433:5432" # 5432 auf Host belegt → 5433 für ws2k Dev-DB
+    environment:
+      POSTGRES_USER: ws2k
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: workspace2k_dev
+    volumes:
+      - ws2k_db_dev:/var/lib/postgresql/data
+
+volumes:
+  ws2k_db_dev:

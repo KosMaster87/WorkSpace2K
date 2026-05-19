@@ -1,0 +1,45 @@
+services:
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile
+    container_name: ws2k-frontend
+    restart: unless-stopped
+    networks:
+      - ws2k
+
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile
+    container_name: ws2k-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - ws2k
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17-alpine
+    container_name: ws2k-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ws2k
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: workspace2k
+    volumes:
+      - ws2k_db:/var/lib/postgresql/data
+    networks:
+      - ws2k
+
+networks:
+  ws2k:
+    driver: bridge
+
+volumes:
+  ws2k_db:

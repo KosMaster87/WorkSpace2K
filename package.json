@@ -1,0 +1,29 @@
+{
+  "name": "workspace2k",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint:frontend": "npm run lint --prefix apps/frontend",
+    "lint:backend": "npm run lint --prefix apps/backend",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "typecheck:frontend": "npm run typecheck --prefix apps/frontend",
+    "typecheck:backend": "npm run typecheck --prefix apps/backend",
+    "typecheck": "npm run typecheck:frontend && npm run typecheck:backend",
+    "build:frontend": "npm run build --prefix apps/frontend",
+    "build:backend": "npm run build --prefix apps/backend",
+    "format": "prettier --write \"apps/**/*.{ts,html,scss,json}\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,html,scss,json}\""
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.5.3"
+  },
+  "lint-staged": {
+    "apps/**/*.{ts,html,scss,json}": ["prettier --write"]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "paths": {
+      "@dev2k/scss-library": ["../../../../../dev2k-Done/Dev2K-Modules/dev2k_modules/scss-library"],
+      "@dev2k/reactive-forms": [
+        "../../../../../dev2k-Done/Dev2K-Modules/dev2k_modules/reactive-forms/src"
+      ],
+      "@dev2k/reactive-forms/*": [
+        "../../../../../dev2k-Done/Dev2K-Modules/dev2k_modules/reactive-forms/src/*"
+      ],
+      "@app/*": ["./src/app/*"],
+      "@env/*": ["./src/environments/*"],
+      "@workspace2k/shared": ["../../packages/shared/src"],
+      "@workspace2k/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

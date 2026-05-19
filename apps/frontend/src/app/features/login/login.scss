@@ -1,0 +1,41 @@
+.login {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  background: var(--background-primary);
+
+  &__card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  &__title {
+    color: var(--primary-color);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+  }
+
+  &__subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  &__btn {
+    padding: var(--space-3) var(--space-6);
+    background: var(--primary-color);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+}

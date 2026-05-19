@@ -1,0 +1,8 @@
+{
+  "name": "@workspace2k/shared",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for WorkSpace2K",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true
+}
