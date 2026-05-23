@@ -114,7 +114,32 @@ WorkSpace2K Backend (Express + TypeScript)
 
 - [ ] Dockerfiles für Frontend + Backend
 - [ ] NPM Proxy Host Konfiguration
-- [ ] Home-Server Deploy (alter PC, Debian)
+- [ ] Home-Server Deploy (alter PC, Fedora 44 Server)
+
+### Home-Server Setup (geplant)
+
+Ziel: WorkSpace2K läuft auf dem Home-Server und verwaltet alle Docker-Services darauf.
+
+```
+Workstation (Browser)
+    ↓ HTTPS via NPM
+Home-Server (Fedora 44 Server)
+├── nginx-proxy-manager   → workspace2k.local oder eigene Domain
+├── WorkSpace2K Frontend  → Management-Interface
+├── WorkSpace2K Backend   → verbindet sich mit Docker Socket
+│   └── /var/run/docker.sock  ← Container-Daten lesen/steuern
+├── Vaultwarden, Gitea, n8n, Matrix, ...
+└── PostgreSQL (WorkSpace2K DB)
+```
+
+- [ ] Backend: Docker Socket einbinden (`/var/run/docker.sock`)
+- [ ] Backend: `GET /api/docker/containers` — Container-Liste + Status
+- [ ] Backend: `POST /api/docker/containers/:id/start|stop` — Container steuern
+- [ ] Docker Compose für Server: `restart: unless-stopped` für alle Services
+- [ ] NPM Proxy Host für WorkSpace2K einrichten
+- [ ] WinBoat auf Home-Server: RDP/noVNC aus dem Netzwerk erreichbar machen
+  - Port 8006 (noVNC → Browser) und 3389 (RDP → Remmina/KRDC auf Workstation)
+  - Ports von `127.0.0.1` auf `0.0.0.0` umstellen (nur im Heimnetz!)
 
 ### PWA
 
