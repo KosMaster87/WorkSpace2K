@@ -158,6 +158,108 @@ Node.js 24, `npm install` (nicht `npm ci`).
 
 ---
 
+## JSDoc-Konvention
+
+**Jede Datei beginnt mit einem `@fileoverview`-Block**, dann eine Leerzeile, dann Imports.
+Danach vollständiges JSDoc für jede Funktion/Methode/Klasse.
+
+### Datei-Header (jede `.ts`-Datei)
+
+```typescript
+/**
+ * @fileoverview Kurzer Titel — was diese Datei macht
+ * @description Längere Beschreibung: Kontext, Verantwortlichkeiten, Abhängigkeiten.
+ * @module ModulName
+ */
+
+import { ... } from '...';
+```
+
+### Funktionen & Methoden (vollständig)
+
+```typescript
+/**
+ * Kurzbeschreibung — was die Funktion tut (Imperativ, eine Zeile).
+ * @description Detailliertere Erklärung: Warum so implementiert, wichtige Seiteneffekte,
+ *   was diese Funktion von anderen unterscheidet.
+ * @async                        ← wenn async
+ * @function funktionsName
+ * @param {TypA} paramName - Beschreibung des Parameters.
+ * @param {TypB} [optionalParam] - Optionaler Parameter (eckige Klammern).
+ * @returns {Promise<TypC>} Was zurückgegeben wird.
+ * @throws {ErrorTyp} Wann dieser Fehler geworfen wird.  ← nur wenn relevant
+ * @private                      ← wenn nur intern
+ */
+```
+
+### Vollständiges Beispiel (Service-Methode)
+
+```typescript
+/**
+ * @fileoverview Auth Service — Login, Session Restore, Logout
+ * @description Kapselt alle HTTP-Aufrufe an die Auth-API.
+ *   Gibt Observable<AuthResponse> zurück — Fehler werden im Effect gefangen.
+ * @module AuthService
+ */
+
+import { HttpClient } from '@angular/common/http';
+
+/**
+ * Sendet Login-Anfrage an die API.
+ * @description Gibt { user, token } zurück. Der Token wird vom loginSuccessEffect
+ *   in localStorage gespeichert und vom authInterceptor automatisch angehängt.
+ * @async
+ * @function login
+ * @param {string} email - E-Mail-Adresse des Users.
+ * @param {string} password - Plaintext-Passwort (wird über HTTPS gesendet).
+ * @returns {Observable<AuthResponse>} User-Objekt und JWT-Token.
+ */
+login(email: string, password: string): Observable<AuthResponse> { ... }
+```
+
+### Pflicht-Tags je nach Kontext
+
+| Tag | Wann |
+| --- | ---- |
+| `@fileoverview` | **Immer** — jede Datei |
+| `@description` | Immer wenn mehr als eine Zeile nötig |
+| `@param` | Jeder Parameter mit `{Typ}` und Beschreibung |
+| `@returns` | Jede Funktion die etwas zurückgibt |
+| `@async` | Jede async-Funktion |
+| `@private` | Methoden die nur intern genutzt werden |
+| `@throws` | Wenn Exceptions explizit geworfen werden |
+| `@deprecated` | Wenn eine Methode ersetzt werden soll |
+
+---
+
+## Pfad-Konventionen
+
+Alle Pfade in Konfigurationsdateien (tsconfig, angular.json, eslint.config.js) sind
+**immer relativ zur jeweiligen Datei** — niemals absolut.
+
+| Syntax      | Bedeutung                              |
+| ----------- | -------------------------------------- |
+| `./foo`     | `foo` im selben Ordner wie diese Datei |
+| `../foo`    | `foo` einen Ordner höher               |
+| `../../foo` | `foo` zwei Ordner höher                |
+
+Absolute Pfade (beginnend mit `/`) sind **verboten** — sie brechen auf anderen Rechnern.
+
+### tsconfig-Struktur (Backend)
+
+Das Backend hat drei tsconfig-Dateien mit unterschiedlichen Zwecken:
+
+| Datei                  | Zweck                                                                 |
+| ---------------------- | --------------------------------------------------------------------- |
+| `tsconfig.json`        | Haupt-Config — nur `src/**/*`, `rootDir: ./src`                       |
+| `tsconfig.seed.json`   | Für `npm run db:seed` — schließt `prisma/**/*` ein, `types: ["node"]` |
+| `prisma/tsconfig.json` | Für VS Code — damit IDE `seed.ts` korrekt prüft                       |
+
+`"types": ["node"]` bedeutet: Lade **nur** `@types/node` (gibt `process`, `__dirname` etc.).
+Ohne diese Angabe lädt TypeScript alle `@types/*`-Pakete automatisch.
+
+---
+
 ## tsconfig-Struktur (Frontend)
 
 `tsconfig.json` enthält `"files": []` und nutzt TypeScript Project References:
