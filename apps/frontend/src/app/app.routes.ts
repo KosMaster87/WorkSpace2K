@@ -1,9 +1,28 @@
+/**
+ * @fileoverview Angular Application Routes — Routing-Konfiguration
+ * @description Definiert alle Routen der Applikation.
+ *   Alle Feature-Komponenten sind lazy-loaded (loadComponent).
+ *   Geschützte Routen liegen unter AppShellComponent (authGuard).
+ *   /login ist nur für nicht-eingeloggte User (guestGuard).
+ *   /settings und /users sind nur für Admins (adminGuard).
+ * @module AppRoutes
+ */
+
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { AppShellComponent } from './layout/app-shell/app-shell';
 
+/**
+ * Applikations-Routen.
+ * @description Route-Struktur:
+ *   - /login → LoginComponent (guestGuard: nur für nicht-eingeloggte)
+ *   - / → AppShellComponent (authGuard: nur für eingeloggte)
+ *     - /dashboard, /services → öffentlich (für alle eingeloggten User)
+ *     - /settings, /users → adminGuard (nur ADMIN-Rolle)
+ *   - ** → redirect zu /login
+ */
 export const routes: Routes = [
   {
     path: 'login',

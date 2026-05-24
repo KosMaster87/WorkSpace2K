@@ -1,9 +1,27 @@
+/**
+ * @fileoverview Auth Controller — Login und Session-Restore Logik
+ * @description Verarbeitet Auth-Requests: Passwort-Prüfung, JWT-Signierung, User-Abfrage.
+ *   Alle Antworten folgen dem ApiResponse-Format: { data: { user, token } }.
+ *   Role wird lowercase zurückgegeben (Frontend erwartet 'admin'/'user', nicht 'ADMIN'/'USER').
+ * @module AuthController
+ */
+
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { prisma } from '../services/prisma.service';
 
+/**
+ * Erstellt einen signierten JWT für einen User.
+ * @description Token enthält userId und role als Payload.
+ *   Ablaufzeit: JWT_EXPIRES_IN aus .env oder Fallback '7d'.
+ *   JWT_SECRET muss in .env gesetzt sein (openssl rand -hex 32).
+ * @param {string} userId - Eindeutige User-ID (CUID).
+ * @param {string} role - User-Rolle ('ADMIN' oder 'USER').
+ * @returns {string} Signierter JWT-String.
+ * @private
+ */
 function signToken(userId: string, role: string): string {
   return jwt.sign(
     { userId, role },
@@ -12,6 +30,21 @@ function signToken(userId: string, role: string): string {
   );
 }
 
+/**
+ * Authentifiziert einen User mit E-Mail und Passwort.
+ * @description Ablauf:
+ *   1. E-Mail und Passwort aus Body lesen
+ *   2. User per E-Mail in der DB suchen
+ *   3. Passwort mit bcrypt.compare prüfen
+ *   4. JWT signieren und User + Token zurückgeben
+ *   Fehlerfall: HTTP 400 bei fehlendem Body, HTTP 401 bei falschen Credentials.
+ *   Security: Gleiche Fehlermeldung für "User nicht gefunden" und "Passwort falsch"
+ *   — verhindert User-Enumeration.
+ * @async
+ * @param {Request} req - Express Request mit { email, password } im Body.
+ * @param {Response} res - Express Response.
+ * @returns {Promise<void>} Schreibt { data: { token, user } } in die Response.
+ */
 export async function login(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body as { email: string; password: string };
 
@@ -40,6 +73,16 @@ export async function login(req: Request, res: Response): Promise<void> {
   });
 }
 
+/**
+ * Gibt den aktuell eingeloggten User zurück und stellt einen frischen Token aus.
+ * @description Wird von GET /api/auth/me aufgerufen — authMiddleware setzt req.userId.
+ *   Gibt einen neu signierten Token zurück (Token-Rotation bei Session Restore).
+ *   HTTP 404 wenn der User in der DB nicht mehr existiert (z.B. gelöscht).
+ * @async
+ * @param {AuthRequest} req - Express Request mit userId aus authMiddleware.
+ * @param {Response} res - Express Response.
+ * @returns {Promise<void>} Schreibt { data: { token, user } } in die Response.
+ */
 export async function getMe(req: AuthRequest, res: Response): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) {

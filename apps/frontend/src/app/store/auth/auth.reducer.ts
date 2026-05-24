@@ -1,7 +1,25 @@
+/**
+ * @fileoverview Auth Reducer — Zustandsübergänge für den Auth-Store
+ * @description Pure Funktion die den Auth-State basierend auf dispatched Actions aktualisiert.
+ *   Behandelt Login-Zyklus (start → success/failure) und Session Restore.
+ *   Logout setzt den State vollständig auf initialAuthState zurück.
+ * @module AuthReducer
+ */
+
 import { createReducer, on } from '@ngrx/store';
 import { AuthActions } from './auth.actions';
 import { initialAuthState } from './auth.state';
 
+/**
+ * Auth-Reducer — verarbeitet alle Auth-Actions und gibt neuen State zurück.
+ * @description Zustandsübergänge:
+ *   - login → isLoading: true, error: null
+ *   - loginSuccess → user + token gesetzt, isLoading: false
+ *   - loginFailure → error gesetzt, isLoading: false
+ *   - logout → State komplett zurückgesetzt (initialAuthState)
+ *   - restoreSessionSuccess → user + token gesetzt (kein isLoading — läuft im Hintergrund)
+ *   - restoreSessionFailure → State komplett zurückgesetzt (initialAuthState)
+ */
 export const authReducer = createReducer(
   initialAuthState,
 
