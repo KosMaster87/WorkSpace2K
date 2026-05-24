@@ -14,4 +14,5 @@ Self-hosted Homelab Management Portal.
 ## Schnelllinks
 
 - Frontend Docs → `apps/frontend/docs/manuel/`
+- Backend Docs  → `apps/backend/docs/manuel/`
 - GitHub → https://github.com/KosMaster87/WorkSpace2K

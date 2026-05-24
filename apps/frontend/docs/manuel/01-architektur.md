@@ -35,21 +35,47 @@ src/app/
 
 ## Konventionen
 
-| Was | Convention |
-|-----|-----------|
-| Komponenten | Standalone (Standard seit Angular 17 — kein `standalone: true` nötig) |
-| Selektoren | `selectXxx` Präfix |
-| Actions | `createActionGroup` mit `source: 'Feature'` |
-| Guards | Functional (`CanActivateFn`) |
-| Interceptors | Functional (`HttpInterceptorFn`) |
-| Effects | Functional (`createEffect(..., { functional: true })`) |
-| SCSS | BEM, nur `@dev2k/scss-library` Tokens (liegt in `packages/scss-library/`) |
+| Was          | Convention                                                                |
+| ------------ | ------------------------------------------------------------------------- |
+| Komponenten  | Standalone (Standard seit Angular 17 — kein `standalone: true` nötig)     |
+| Selektoren   | `selectXxx` Präfix                                                        |
+| Actions      | `createActionGroup` mit `source: 'Feature'`                               |
+| Guards       | Functional (`CanActivateFn`)                                              |
+| Interceptors | Functional (`HttpInterceptorFn`)                                          |
+| Effects      | Functional (`createEffect(..., { functional: true })`)                    |
+| SCSS         | BEM, nur `@dev2k/scss-library` Tokens (liegt in `packages/scss-library/`) |
+
+## Proxy-Konfiguration (Dev-Modus)
+
+Im Development-Modus läuft das Frontend auf Port **4200**, das Backend auf Port **3000**.
+Ohne Proxy würde der Browser `/api/auth/login` auf `localhost:4200` suchen → 404.
+
+```json
+// proxy.conf.json (im frontend/-Ordner)
+{
+  "/api": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
+```
+
+```json
+// angular.json — im "serve" > "options" Block:
+"proxyConfig": "proxy.conf.json"
+```
+
+Der Angular Dev-Server leitet alle `/api/*`-Anfragen an `localhost:3000` weiter.
+Im Production-Build übernimmt das **Nginx Proxy Manager** — kein Proxy-File nötig.
+
+---
 
 ## Wann NgRx Store vs. Signal Store?
 
 | NgRx Store (`@ngrx/store`) | Signal Store (`@ngrx/signals`) |
-|---------------------------|-------------------------------|
-| Globaler, async State | Lokaler, sync UI-State |
-| Auth, API-Daten | Theme, Sidebar, PageTitle |
-| Braucht Effects | Kein Effect nötig |
-| DevTools integriert | Einfacher, weniger Boilerplate |
+| -------------------------- | ------------------------------ |
+| Globaler, async State      | Lokaler, sync UI-State         |
+| Auth, API-Daten            | Theme, Sidebar, PageTitle      |
+| Braucht Effects            | Kein Effect nötig              |
+| DevTools integriert        | Einfacher, weniger Boilerplate |

@@ -2,11 +2,11 @@
 
 ## Übersicht
 
-| Guard | Schützt | Redirect bei Fail |
-|-------|---------|------------------|
-| `authGuard` | Eingeloggte Bereiche | → `/login` |
-| `guestGuard` | `/login` | → `/dashboard` (wenn schon eingeloggt) |
-| `adminGuard` | Admin-Only Routen | → `/dashboard` |
+| Guard        | Schützt              | Redirect bei Fail                      |
+| ------------ | -------------------- | -------------------------------------- |
+| `authGuard`  | Eingeloggte Bereiche | → `/login`                             |
+| `guestGuard` | `/login`             | → `/dashboard` (wenn schon eingeloggt) |
+| `adminGuard` | Admin-Only Routen    | → `/dashboard`                         |
 
 ## Verwendung in Routes
 
@@ -39,8 +39,8 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return store.select(selectIsAuthenticated).pipe(
-    take(1),                                        // einmalig lesen
-    map(isAuth => isAuth || router.createUrlTree(['/login']))
+    take(1), // einmalig lesen
+    map((isAuth) => isAuth || router.createUrlTree(['/login'])),
     //            ^true    ^UrlTree = Redirect
   );
 };
@@ -55,6 +55,6 @@ Mehrere Guards auf einer Route werden nacheinander ausgeführt.
 Schlägt einer fehl → Redirect, die anderen werden nicht mehr geprüft.
 
 ```typescript
-canActivate: [authGuard, adminGuard]
+canActivate: [authGuard, adminGuard];
 // Erst auth prüfen, dann admin
 ```

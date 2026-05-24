@@ -51,6 +51,7 @@ appStore.restoreTheme()       // aus localStorage beim App-Start
 ## State-Restore beim App-Start
 
 `app.ts` → `ngOnInit()`:
+
 1. `appStore.restoreTheme()` — setzt data-theme auf `<html>` aus localStorage
 2. `store.dispatch(AuthActions.restoreSession())` — prüft JWT Token im localStorage
 
