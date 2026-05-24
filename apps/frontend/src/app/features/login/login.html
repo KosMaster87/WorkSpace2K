@@ -1,7 +1,48 @@
 <div class="login">
   <div class="login__card">
     <h1 class="login__title">WorkSpace2K</h1>
-    <p class="login__subtitle">Login coming soon</p>
-    <button class="login__btn" (click)="devLogin()">Dev Login</button>
+    <p class="login__subtitle">Developer2K Solutions</p>
+
+    <form class="login__form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="login__field">
+        <label class="login__label" for="email">E-Mail</label>
+        <input
+          class="login__input"
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+          placeholder="admin@dev2ksoftware.com"
+        />
+      </div>
+
+      <div class="login__field">
+        <label class="login__label" for="password">Passwort</label>
+        <input
+          class="login__input"
+          id="password"
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          autocomplete="current-password"
+          placeholder="••••••••"
+        />
+      </div>
+
+      @if (error()) {
+        <p class="login__error">{{ error() }}</p>
+      }
+
+      <button class="login__btn" type="submit" [disabled]="isLoading() || !email || !password">
+        @if (isLoading()) {
+          Wird angemeldet…
+        } @else {
+          Anmelden
+        }
+      </button>
+    </form>
   </div>
 </div>

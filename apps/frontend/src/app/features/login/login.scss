@@ -5,7 +5,11 @@
   background: var(--background-primary);
 
   &__card {
-    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    padding: var(--space-8);
+    background: var(--background-secondary);
+    border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
@@ -16,11 +20,59 @@
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     margin: 0;
+    text-align: center;
   }
 
   &__subtitle {
     color: var(--text-secondary);
     margin: 0;
+    text-align: center;
+    font-size: var(--font-size-sm);
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  &__label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__input {
+    padding: var(--space-3) var(--space-4);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    transition: border-color var(--transition-fast);
+    outline: none;
+
+    &::placeholder {
+      color: var(--text-disabled);
+    }
+
+    &:focus {
+      border-color: var(--primary-color);
+    }
+  }
+
+  &__error {
+    color: var(--error-color);
+    font-size: var(--font-size-sm);
+    margin: 0;
+    text-align: center;
   }
 
   &__btn {
@@ -33,9 +85,15 @@
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: background var(--transition-fast);
+    margin-top: var(--space-2);
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--primary-dark);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }
