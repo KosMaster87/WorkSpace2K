@@ -24,6 +24,9 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 
+# Claude Code — lokale Einstellungen (nicht ins Repo)
+.claude/settings.local.json
+
 # Test coverage
 coverage/
 
