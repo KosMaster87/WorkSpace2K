@@ -8,9 +8,9 @@
 
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { ContainerStats, DockerService } from '@workspace2k/shared';
+import { EMPTY, catchError, map, mergeMap, of, switchMap } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
-import { DockerService } from '@workspace2k/shared';
 import { DockerActions } from './docker.actions';
 
 /**
@@ -38,8 +38,39 @@ export const loadContainersEffect = createEffect(
 );
 
 /**
+ * Lädt Stats für alle laufenden Container nach loadContainersSuccess.
+ * @description mergeMap — alle Requests laufen parallel, keiner bricht den anderen ab.
+ *   Fehler einzelner Stat-Requests werden still ignoriert (EMPTY) —
+ *   kein Error-Banner, da Stats optional sind.
+ * @returns {Observable<Action>} loadContainerStatsSuccess pro Container (oder nichts).
+ */
+export const loadStatsAfterContainersEffect = createEffect(
+  (actions$ = inject(Actions), containerService = inject(ContainerService)) =>
+    actions$.pipe(
+      ofType(DockerActions.loadContainersSuccess),
+      switchMap(({ containers }) => {
+        const running = containers.filter((c: DockerService) => c.status === 'running');
+        return running.length === 0
+          ? EMPTY
+          : of(...running).pipe(
+              mergeMap((container: DockerService) =>
+                containerService.getContainerStats(container.id).pipe(
+                  map((stats: ContainerStats) =>
+                    DockerActions.loadContainerStatsSuccess({ id: container.id, stats }),
+                  ),
+                  catchError(() =>
+                    of(DockerActions.loadContainerStatsFailure({ id: container.id })),
+                  ),
+                ),
+              ),
+            );
+      }),
+    ),
+  { functional: true },
+);
+
+/**
  * Startet einen Container und dispatcht Erfolg oder Fehler.
- * @description mergeMap statt switchMap — mehrere Container können gleichzeitig gestartet werden.
  * @returns {Observable<Action>} startContainerSuccess oder startContainerFailure.
  */
 export const startContainerEffect = createEffect(

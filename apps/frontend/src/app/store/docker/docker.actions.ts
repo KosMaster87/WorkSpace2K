@@ -2,37 +2,39 @@
  * @fileoverview Docker Actions — NgRx Action-Definitionen für Container-Management
  * @description Alle Actions des Docker-Stores.
  *   Gruppiert mit createActionGroup — Zugriff via DockerActions.loadContainers etc.
- *   Deckt: Container-Liste laden, Container starten, Container stoppen.
+ *   Deckt: Container-Liste laden, Stats laden, Container starten/stoppen.
  * @module DockerActions
  */
 
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { DockerService } from '@workspace2k/shared';
+import { ContainerStats, DockerService } from '@workspace2k/shared';
 
 /**
  * Docker Action Group — alle Container-Management-Actions.
- * @description Actions und ihre Props:
- *   - loadContainers: keine Props → Effect ruft GET /api/docker/containers ab
- *   - loadContainersSuccess: containers[] → Reducer setzt Container-Liste
- *   - loadContainersFailure: error → Reducer setzt Fehlermeldung
- *   - startContainer: id → Effect sendet POST /api/docker/containers/:id/start
- *   - startContainerSuccess: id → Reducer setzt Container-Status auf 'running'
- *   - startContainerFailure: id + error → Reducer entfernt id aus pendingIds
- *   - stopContainer: id → Effect sendet POST /api/docker/containers/:id/stop
- *   - stopContainerSuccess: id → Reducer setzt Container-Status auf 'stopped'
- *   - stopContainerFailure: id + error → Reducer entfernt id aus pendingIds
+ * @description
+ *   loadContainers → GET /api/docker/containers
+ *   loadContainerStats → GET /api/docker/containers/:id/stats (nach loadContainersSuccess)
+ *   startContainer / stopContainer → POST /api/docker/containers/:id/start|stop
  */
 export const DockerActions = createActionGroup({
   source: 'Docker',
   events: {
+    // ── Container-Liste ──────────────────────────────────────────────────
     'Load Containers': emptyProps(),
     'Load Containers Success': props<{ containers: DockerService[] }>(),
     'Load Containers Failure': props<{ error: string }>(),
 
+    // ── Container-Stats ──────────────────────────────────────────────────
+    'Load Container Stats': props<{ id: string }>(),
+    'Load Container Stats Success': props<{ id: string; stats: ContainerStats }>(),
+    'Load Container Stats Failure': props<{ id: string }>(),
+
+    // ── Container starten ────────────────────────────────────────────────
     'Start Container': props<{ id: string }>(),
     'Start Container Success': props<{ id: string }>(),
     'Start Container Failure': props<{ id: string; error: string }>(),
 
+    // ── Container stoppen ────────────────────────────────────────────────
     'Stop Container': props<{ id: string }>(),
     'Stop Container Success': props<{ id: string }>(),
     'Stop Container Failure': props<{ id: string; error: string }>(),

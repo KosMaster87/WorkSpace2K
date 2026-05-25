@@ -10,7 +10,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { DockerService } from '@workspace2k/shared';
+import { ContainerStats, DockerService } from '@workspace2k/shared';
 
 /**
  * Rohes API-Antwortformat für die Container-Liste.
@@ -18,6 +18,14 @@ import { DockerService } from '@workspace2k/shared';
  */
 interface ApiContainersResponse {
   data: DockerService[];
+}
+
+/**
+ * Rohes API-Antwortformat für Container-Stats.
+ * @private
+ */
+interface ApiStatsResponse {
+  data: ContainerStats;
 }
 
 /**
@@ -39,6 +47,18 @@ export class ContainerService {
   getContainers(): Observable<DockerService[]> {
     return this.http
       .get<ApiContainersResponse>(`${this.apiUrl}/containers`)
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Lädt CPU, RAM und Uptime eines einzelnen Containers.
+   * @description GET /api/docker/containers/:id/stats — nur für laufende Container sinnvoll.
+   * @param {string} id - Container-ID (kurz, 12 Zeichen).
+   * @returns {Observable<ContainerStats>} CPU %, RAM, Uptime.
+   */
+  getContainerStats(id: string): Observable<ContainerStats> {
+    return this.http
+      .get<ApiStatsResponse>(`${this.apiUrl}/containers/${id}/stats`)
       .pipe(map((res) => res.data));
   }
 

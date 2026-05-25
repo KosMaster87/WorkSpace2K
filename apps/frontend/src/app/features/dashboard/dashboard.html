@@ -44,6 +44,30 @@
             @if (container.port) {
               <p class="service-tile__port">Port {{ container.port }}</p>
             }
+            @if (container.status === 'running') {
+              @let s = statsFor(container.id);
+              @if (s) {
+                <div class="service-tile__stats">
+                  <div class="stat-row">
+                    <span class="stat-row__label">CPU</span>
+                    <span class="stat-row__value">{{ s.cpuPercent }}</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-row__label">RAM</span>
+                    <span class="stat-row__value">{{ s.memoryUsage }} / {{ s.memoryLimit }}</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-row__label">Uptime</span>
+                    <span class="stat-row__value">{{ s.uptime }}</span>
+                  </div>
+                </div>
+              } @else {
+                <div class="service-tile__stats service-tile__stats--loading">
+                  <span class="loading-spinner loading-spinner--sm"></span>
+                  <span>Stats laden…</span>
+                </div>
+              }
+            }
           </div>
         }
       </div>
