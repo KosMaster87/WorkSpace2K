@@ -1,0 +1,24 @@
+# ── Node Modules & Build-Artefakte ───────────────────────────────────────────
+**/node_modules
+**/dist
+apps/frontend/.angular
+
+# ── Git & CI ──────────────────────────────────────────────────────────────────
+.git
+.gitignore
+.github
+
+# ── Lokale Konfiguration (nicht für Container) ────────────────────────────────
+apps/backend/.env
+apps/backend/.env.*
+docker/.env
+docker/.env.*
+
+# ── Docs & Dev-Dateien ────────────────────────────────────────────────────────
+docs/
+*.md
+TECH-DEBT.md
+
+# ── Tests & Coverage ──────────────────────────────────────────────────────────
+**/coverage
+**/*.spec.ts

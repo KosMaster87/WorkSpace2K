@@ -79,6 +79,15 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] `POST /api/docker/containers/:id/start` — Container starten
 - [x] `POST /api/docker/containers/:id/stop` — Container stoppen
 - [x] rootDir fix — `@workspace2k/shared` in Backend importierbar
+- [x] `GET /api/users` — Alle User auflisten (Admin)
+- [x] `POST /api/users` — Neuen User anlegen (Admin)
+- [x] `PATCH /api/users/:id/role` — Rolle ändern (Admin)
+- [x] `DELETE /api/users/:id` — User löschen (Admin)
+
+### Frontend (weitere Features)
+
+- [x] Users-Page — Tabelle, User anlegen, Rolle ändern, User löschen (mit Bestätigung)
+- [x] Settings-Page — Theme-Toggle, Sidebar-Toggle, App-Info
 
 ### Docker
 
@@ -98,32 +107,21 @@ WorkSpace2K Backend (Express + TypeScript)
 
 ## In Arbeit 🔧
 
-### User Management
+### Infrastructure — Dockerfiles & Deploy
 
-- [ ] Backend: `GET /api/users` — Alle User auflisten (Admin)
-- [ ] Backend: `POST /api/users` — Neuen User anlegen (Admin)
-- [ ] Backend: `PATCH /api/users/:id/role` — Rolle ändern (Admin)
-- [ ] Backend: `DELETE /api/users/:id` — User löschen (Admin)
-- [ ] Frontend: Users-Page — Tabelle mit allen Usern
-- [ ] Frontend: User anlegen (Formular)
-- [ ] Frontend: Rolle ändern
-- [ ] Frontend: User löschen (mit Bestätigung)
+- [x] Dockerfile Frontend (nginx, multi-stage build) — `apps/frontend/Dockerfile`
+- [x] Dockerfile Backend (node, multi-stage build) — `apps/backend/Dockerfile`
+- [x] `apps/frontend/nginx.conf` (SPA-Routing + /api/ Proxy)
+- [x] `docker-compose.yml` — Build-Context auf Monorepo-Root gesetzt
+- [x] `docker/.env.example` — Produktions-Variablen (JWT, DB, CORS)
+- [x] `.dockerignore` — node_modules, dist, .env ausschließen
+- [x] `tsc-alias` — Path-Alias-Rewriting für Backend-Build
+- [ ] NPM Proxy Host Konfiguration
+- [ ] Home-Server Deploy (alter PC)
 
 ---
 
 ## Geplant 📋
-
-### Settings-Page
-
-- [ ] Frontend: Settings-Page — Theme-Auswahl (Dark/Light), ggf. weitere App-Einstellungen
-
-### Infrastructure — Dockerfiles & Deploy
-
-- [ ] Dockerfile Frontend (nginx, multi-stage build)
-- [ ] Dockerfile Backend (node, multi-stage build)
-- [ ] `docker-compose.yml` anpassen für Production-Build
-- [ ] NPM Proxy Host Konfiguration
-- [ ] Home-Server Deploy (alter PC)
 
 ### Home-Server Setup (geplant)
 
