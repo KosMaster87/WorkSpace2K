@@ -41,7 +41,7 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard').then((m) => m.DashboardComponent),
       },
       {
-        path: 'services',
+        path: 'docker',
         loadComponent: () =>
           import('./features/services/services').then((m) => m.ServicesComponent),
       },
