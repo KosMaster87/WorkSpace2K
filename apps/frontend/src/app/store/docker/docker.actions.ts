@@ -7,7 +7,7 @@
  */
 
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { Container } from './docker.state';
+import { DockerService } from '@workspace2k/shared';
 
 /**
  * Docker Action Group — alle Container-Management-Actions.
@@ -26,7 +26,7 @@ export const DockerActions = createActionGroup({
   source: 'Docker',
   events: {
     'Load Containers': emptyProps(),
-    'Load Containers Success': props<{ containers: Container[] }>(),
+    'Load Containers Success': props<{ containers: DockerService[] }>(),
     'Load Containers Failure': props<{ error: string }>(),
 
     'Start Container': props<{ id: string }>(),

@@ -1,26 +1,16 @@
 /**
  * @fileoverview Auth State — NgRx Auth-Store Typen und Initialzustand
  * @description Definiert den Typ des Auth-State und den Initialzustand.
- *   User-Interface wird auch im shared-Package gespiegelt — hier die Frontend-lokale Version.
+ *   User und UserRole werden aus @workspace2k/shared importiert und re-exportiert —
+ *   möglich seit rootDir aus tsconfig.app.json entfernt wurde (TD-001 gelöst).
+ *   auth.actions.ts und auth.effects.ts importieren User weiterhin von hier.
  * @module AuthState
  */
 
-/**
- * Repräsentiert einen eingeloggten User im Frontend-State.
- * @interface User
- */
-export interface User {
-  /** Eindeutige User-ID (CUID aus der Datenbank). */
-  id: string;
-  /** E-Mail-Adresse des Users. */
-  email: string;
-  /** Anzeigename des Users. */
-  name: string;
-  /** Rolle des Users — bestimmt Zugriff auf Admin-Routen. */
-  role: 'admin' | 'user';
-  /** Optionaler Avatar-URL. */
-  avatar?: string;
-}
+import { User, UserRole } from '@workspace2k/shared';
+
+// Re-Export — auth.actions.ts und auth.effects.ts importieren User von hier
+export type { User, UserRole };
 
 /**
  * Vollständiger Auth-State im NgRx Store.
