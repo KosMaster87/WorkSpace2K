@@ -1,0 +1,120 @@
+version: 2
+updates:
+  # Root — Workspace-Tools (husky, commitlint, lint-staged, prettier)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      root-dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # Frontend — Angular, NgRx, Vitest, ESLint, TypeScript
+  - package-ecosystem: npm
+    directory: /apps/frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - frontend
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+        update-types:
+          - minor
+          - patch
+      ngrx:
+        patterns:
+          - '@ngrx/*'
+        update-types:
+          - minor
+          - patch
+      frontend-dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # Backend — Express, Prisma, JWT, bcrypt, TypeScript
+  - package-ecosystem: npm
+    directory: /apps/backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - backend
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      backend-dependencies:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      backend-dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # Shared — gemeinsame Types und Utilities
+  - package-ecosystem: npm
+    directory: /packages/shared
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      shared-dependencies:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions — Workflow-Dependencies aktuell halten
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: chore
+      include: scope
