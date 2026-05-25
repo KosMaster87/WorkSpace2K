@@ -8,29 +8,14 @@
  */
 
 import Dockerode from 'dockerode';
+import { DockerService, ServiceStatus } from '@workspace2k/shared';
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
 /**
- * Mögliche Status-Werte eines Docker-Containers.
- * @description Spiegelt ServiceStatus aus @workspace2k/shared — bewusst lokal
- *   definiert, da Backend rootDir auf ./src begrenzt ist.
- */
-type ServiceStatus = 'running' | 'stopped' | 'error' | 'unknown';
-
-/**
- * Docker-Container Repräsentation — spiegelt DockerService aus @workspace2k/shared.
- */
-export interface DockerContainerInfo {
-  id: string;
-  name: string;
-  image: string;
-  status: ServiceStatus;
-  port?: number;
-}
-
-/**
  * Laufzeit-Statistiken eines Containers.
+ * @description Backend-spezifisch — nicht im shared Package, da nur das Backend
+ *   Zugriff auf den Docker Socket hat.
  */
 export interface ContainerStats {
   id: string;
@@ -124,10 +109,10 @@ function calcUptime(startedAt: string): string {
  *   Port: Erster öffentlicher Port aus der Ports-Liste, falls vorhanden.
  * @async
  * @function listContainers
- * @returns {Promise<DockerContainerInfo[]>} Liste aller Container im DockerContainerInfo-Format.
+ * @returns {Promise<DockerService[]>} Liste aller Container im DockerService-Format.
  * @throws {Error} Wenn der Docker Socket nicht erreichbar ist.
  */
-export async function listContainers(): Promise<DockerContainerInfo[]> {
+export async function listContainers(): Promise<DockerService[]> {
   const containers = await docker.listContainers({ all: true });
 
   return containers.map((c) => ({
