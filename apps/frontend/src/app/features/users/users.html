@@ -1,3 +1,137 @@
 <div class="users">
-  <h2>Users</h2>
+  <header class="users__header">
+    <div>
+      <h2>Users</h2>
+      <p class="users__subtitle">Benutzerverwaltung — nur ADMIN</p>
+    </div>
+    <button class="btn btn--primary" (click)="openForm()">+ Neuer User</button>
+  </header>
+
+  @if (error()) {
+    <div class="users__error"><strong>Fehler:</strong> {{ error() }}</div>
+  }
+
+  @if (showForm) {
+    <div class="user-form">
+      <h3 class="user-form__title">Neuen User anlegen</h3>
+      <div class="user-form__fields">
+        <div class="form-field">
+          <label class="form-field__label" for="newName">Name</label>
+          <input
+            id="newName"
+            class="form-field__input"
+            type="text"
+            [(ngModel)]="newUser.name"
+            placeholder="Vor- und Nachname"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="newEmail">E-Mail</label>
+          <input
+            id="newEmail"
+            class="form-field__input"
+            type="email"
+            [(ngModel)]="newUser.email"
+            placeholder="user@example.com"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="newPassword">Passwort</label>
+          <input
+            id="newPassword"
+            class="form-field__input"
+            type="password"
+            [(ngModel)]="newUser.password"
+            placeholder="Mindestens 8 Zeichen"
+            autocomplete="new-password"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="newRole">Rolle</label>
+          <select id="newRole" class="form-field__select" [(ngModel)]="newUser.role">
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+      </div>
+      <div class="user-form__actions">
+        <button
+          class="btn btn--primary"
+          [disabled]="isCreating() || !newUser.name || !newUser.email || !newUser.password"
+          (click)="submitCreate()"
+        >
+          @if (isCreating()) {
+            <span class="loading-spinner loading-spinner--sm"></span>
+          }
+          Anlegen
+        </button>
+        <button class="btn btn--ghost" (click)="closeForm()">Abbrechen</button>
+      </div>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="users__loading">
+      <span class="loading-spinner"></span>
+      <span>User werden geladen…</span>
+    </div>
+  } @else if (users().length === 0) {
+    <div class="users__empty">Keine User gefunden.</div>
+  } @else {
+    <div class="users__table-wrap">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>E-Mail</th>
+            <th>Rolle</th>
+            <th>Erstellt</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr class="user-table__row" [class.user-table__row--pending]="isPending(user.id)">
+              <td class="user-table__name">{{ user.name }}</td>
+              <td class="user-table__email">{{ user.email }}</td>
+              <td class="user-table__role">
+                <select
+                  class="role-select"
+                  [value]="user.role"
+                  [disabled]="isPending(user.id)"
+                  (change)="changeRole(user, $any($event.target).value)"
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </td>
+              <td class="user-table__date">
+                {{ user.createdAt | date: 'dd.MM.yyyy' }}
+              </td>
+              <td class="user-table__actions">
+                @if (confirmDeleteId === user.id) {
+                  <span class="delete-confirm">
+                    <span class="delete-confirm__label">Sicher?</span>
+                    <button class="btn btn--danger btn--sm" (click)="confirmDelete()">Löschen</button>
+                    <button class="btn btn--ghost btn--sm" (click)="cancelDelete()">Abbrechen</button>
+                  </span>
+                } @else {
+                  <button
+                    class="btn btn--ghost btn--sm btn--icon"
+                    [disabled]="isPending(user.id)"
+                    (click)="requestDelete(user.id)"
+                    title="User löschen"
+                  >
+                    🗑
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>

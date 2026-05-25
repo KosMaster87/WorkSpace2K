@@ -47,15 +47,21 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] NgRx Auth Store (Actions, Reducer, Selectors, Effects)
 - [x] NgRx Signal Store (AppStore — Theme, Sidebar, PageTitle)
 - [x] Functional Guards: `authGuard`, `guestGuard`, `adminGuard`
-- [x] Auth Interceptor (JWT automatisch in HTTP-Header)
+- [x] Auth Interceptor (JWT automatisch in HTTP-Header, localStorage-Fallback)
+- [x] Session Restore nach Seiten-Refresh (`isResolved` Flag, Guards warten)
 - [x] Lazy-loaded Routes: Dashboard, Services, Settings, Users
-- [x] Login-Page (Dev-Login für Entwicklung)
-- [x] `@workspace2k/shared` TypeScript-Types eingebunden
+- [x] Login-Page
+- [x] `@workspace2k/shared` TypeScript-Types eingebunden (rootDir fix)
+- [x] Dashboard — Service-Kacheln mit Live-Status (running/stopped)
+- [x] Dashboard — Stats-Kacheln (CPU %, RAM, Uptime) für laufende Container
+- [x] Services-Page — Container-Liste mit Start/Stop-Buttons + Pending-State
+- [x] NgRx Docker Store (Actions, Reducer, Selectors, Effects, State)
 
-### Shared Package
+### Shared Package (`@workspace2k/shared`)
 
 - [x] `User`, `UserRole` Interface
 - [x] `DockerService`, `ServiceStatus` Interface
+- [x] `ContainerStats` Interface (CPU, RAM, Uptime)
 - [x] `ApiResponse<T>`, `ApiError`, `PaginatedResponse<T>`
 
 ### Backend (Express + TypeScript)
@@ -68,19 +74,16 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] Auth Middleware (JWT-Prüfung)
 - [x] `GET /api/health` (Health-Check Endpoint)
 - [x] Helmet + CORS konfiguriert
+- [x] `GET /api/docker/containers` — Container-Liste (laufend + gestoppt)
+- [x] `GET /api/docker/containers/:id/stats` — CPU, RAM, Uptime
+- [x] `POST /api/docker/containers/:id/start` — Container starten
+- [x] `POST /api/docker/containers/:id/stop` — Container stoppen
+- [x] rootDir fix — `@workspace2k/shared` in Backend importierbar
 
 ### Docker
 
 - [x] `docker-compose.yml` (Frontend + Backend + PostgreSQL)
 - [x] `docker-compose.dev.yml` (nur PostgreSQL lokal, Port 5433)
-
-### Auth-Flow (vollständig)
-
-- [x] `restoreSession` in `app.ts` aktiviert
-- [x] Login-Page auf echte API verdrahtet
-- [x] Admin-User geseedet (`admin@workspace2k.dev`)
-- [x] `POST /api/auth/login` ✅ getestet
-- [x] `GET /api/auth/me` ✅ getestet
 
 ### CI/CD & Code-Qualität
 
@@ -95,37 +98,32 @@ WorkSpace2K Backend (Express + TypeScript)
 
 ## In Arbeit 🔧
 
-### Backend — Docker API Integration
+### User Management
 
-- [ ] Docker Socket einbinden (`/var/run/docker.sock`)
-- [ ] `GET /api/docker/containers` — Container-Liste mit Status
-- [ ] `POST /api/docker/containers/:id/start` — Container starten
-- [ ] `POST /api/docker/containers/:id/stop` — Container stoppen
-- [ ] `dockerRouter` in `index.ts` registrieren
+- [ ] Backend: `GET /api/users` — Alle User auflisten (Admin)
+- [ ] Backend: `POST /api/users` — Neuen User anlegen (Admin)
+- [ ] Backend: `PATCH /api/users/:id/role` — Rolle ändern (Admin)
+- [ ] Backend: `DELETE /api/users/:id` — User löschen (Admin)
+- [ ] Frontend: Users-Page — Tabelle mit allen Usern
+- [ ] Frontend: User anlegen (Formular)
+- [ ] Frontend: Rolle ändern
+- [ ] Frontend: User löschen (mit Bestätigung)
 
 ---
 
 ## Geplant 📋
 
-### Backend — Features
+### Settings-Page
 
-- [ ] Docker API Integration (`/api/docker/containers`)
-- [ ] Service-Status API (RAM, CPU, Status)
-- [ ] User Management API (CRUD)
-- [ ] Settings API
+- [ ] Frontend: Settings-Page — Theme-Auswahl (Dark/Light), ggf. weitere App-Einstellungen
 
-### Frontend — Pages
+### Infrastructure — Dockerfiles & Deploy
 
-- [ ] Dashboard: Service-Kacheln mit Live-Status
-- [ ] Services-Page: Container starten/stoppen
-- [ ] Users-Page: Benutzer verwalten (Admin)
-- [ ] Settings-Page: App-Konfiguration
-
-### Infrastructure
-
-- [ ] Dockerfiles für Frontend + Backend
+- [ ] Dockerfile Frontend (nginx, multi-stage build)
+- [ ] Dockerfile Backend (node, multi-stage build)
+- [ ] `docker-compose.yml` anpassen für Production-Build
 - [ ] NPM Proxy Host Konfiguration
-- [ ] Home-Server Deploy (alter PC, Fedora 44 Server)
+- [ ] Home-Server Deploy (alter PC)
 
 ### Home-Server Setup (geplant)
 
@@ -143,16 +141,7 @@ Home-Server (Fedora 44 Server)
 └── PostgreSQL (WorkSpace2K DB)
 ```
 
-- [ ] Backend: Docker Socket einbinden (`/var/run/docker.sock`)
-- [ ] Backend: `GET /api/docker/containers` — Container-Liste + Status
-- [ ] Backend: `POST /api/docker/containers/:id/start|stop` — Container steuern
-- [ ] Docker Compose für Server: `restart: unless-stopped` für alle Services
-- [ ] NPM Proxy Host für WorkSpace2K einrichten
-- [ ] WinBoat auf Home-Server: RDP/noVNC aus dem Netzwerk erreichbar machen
-  - Port 8006 (noVNC → Browser) und 3389 (RDP → Remmina/KRDC auf Workstation)
-  - Ports von `127.0.0.1` auf `0.0.0.0` umstellen (nur im Heimnetz!)
-
-### PWA
+### PWA (später)
 
 - [ ] Service Worker aktivieren (`@angular/service-worker`)
 - [ ] Offline-Support
