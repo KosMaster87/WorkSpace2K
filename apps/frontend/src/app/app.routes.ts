@@ -46,6 +46,11 @@ export const routes: Routes = [
           import('./features/services/services').then((m) => m.ServicesComponent),
       },
       {
+        path: 'destinations',
+        loadComponent: () =>
+          import('./features/destinations/destinations').then((m) => m.DestinationsComponent),
+      },
+      {
         path: 'settings',
         canActivate: [adminGuard],
         loadComponent: () =>

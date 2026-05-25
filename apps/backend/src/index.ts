@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import { authRouter } from './routes/auth.routes';
+import { destinationsRouter } from './routes/destinations.routes';
 import { dockerRouter } from './routes/docker.routes';
 import { usersRouter } from './routes/users.routes';
 
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/docker', dockerRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/destinations', destinationsRouter);
 
 /**
  * Health-Check Endpoint — prüft ob der Server erreichbar ist.

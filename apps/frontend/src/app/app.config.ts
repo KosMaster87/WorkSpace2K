@@ -16,6 +16,8 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import * as AuthEffects from './store/auth/auth.effects';
 import { authReducer } from './store/auth/auth.reducer';
+import * as DestinationsEffects from './store/destinations/destinations.effects';
+import { destinationsReducer } from './store/destinations/destinations.reducer';
 import * as DockerEffects from './store/docker/docker.effects';
 import { dockerReducer } from './store/docker/docker.reducer';
 import * as UsersEffects from './store/users/users.effects';
@@ -35,8 +37,13 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideStore({ auth: authReducer, docker: dockerReducer, users: usersReducer }),
-    provideEffects(AuthEffects, DockerEffects, UsersEffects),
+    provideStore({
+      auth: authReducer,
+      docker: dockerReducer,
+      users: usersReducer,
+      destinations: destinationsReducer,
+    }),
+    provideEffects(AuthEffects, DockerEffects, UsersEffects, DestinationsEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
   ],
 };
