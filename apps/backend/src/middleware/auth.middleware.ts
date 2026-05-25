@@ -24,7 +24,9 @@ export interface AuthRequest extends Request {
 /**
  * Prüft den JWT-Bearer-Token und setzt userId/userRole am Request-Objekt.
  * @description Erwartet Header: "Authorization: Bearer <token>".
- *   Fehlerfall 1: Kein oder falsches Header-Format → HTTP 401 'Unauthorized'.
+ *   Fallback: ?token= Query-Parameter — für SSE-Endpoints (EventSource unterstützt
+ *   keine Custom-Header). Der Query-Token wird nur akzeptiert wenn kein Header gesetzt ist.
+ *   Fehlerfall 1: Kein Token (weder Header noch Query) → HTTP 401 'Unauthorized'.
  *   Fehlerfall 2: Token abgelaufen oder ungültig → HTTP 401 'Invalid token'.
  *   Erfolg: req.userId und req.userRole werden gesetzt, next() wird aufgerufen.
  * @param {AuthRequest} req - Express Request mit optionalem Authorization-Header.
@@ -34,12 +36,15 @@ export interface AuthRequest extends Request {
  */
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  // SSE-Fallback: ?token= Query-Parameter (EventSource sendet keine Custom-Header)
+  const queryToken = (req.query as { token?: string }).token;
+
+  const token = header?.startsWith('Bearer ') ? header.split(' ')[1] : queryToken;
+
+  if (!token) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
-
-  const token = header.split(' ')[1];
   try {
     const payload = jwt.verify(token, process.env['JWT_SECRET'] as string) as {
       userId: string;

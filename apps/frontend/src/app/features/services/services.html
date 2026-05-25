@@ -128,15 +128,10 @@
                         <button
                           class="btn btn--logs"
                           [class.btn--logs-active]="openLogsId === container.id"
-                          [disabled]="isLogsLoading(container.id)"
                           (click)="toggleLogs(container.id)"
                           title="Logs anzeigen"
                         >
-                          @if (isLogsLoading(container.id)) {
-                            <span class="btn__spinner"></span>
-                          } @else {
-                            📋
-                          }
+                          📋
                         </button>
                         @if (container.status === 'stopped') {
                           @if (confirmDeleteId === container.id) {
@@ -159,22 +154,26 @@
                       </td>
                     </tr>
                     @if (openLogsId === container.id) {
+                      @let lines = getLogs(container.id);
                       <tr class="container-logs-row">
                         <td colspan="5">
                           <div class="log-panel">
                             <div class="log-panel__header">
-                              <span class="log-panel__title">Logs — {{ container.name }}</span>
+                              <div class="log-panel__title-group">
+                                <span class="log-panel__title">Logs — {{ container.name }}</span>
+                                @if (isStreaming(container.id)) {
+                                  <span class="log-panel__live">● LIVE</span>
+                                }
+                              </div>
                               <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
                             </div>
-                            @if (isLogsLoading(container.id)) {
+                            @if (lines.length === 0) {
                               <div class="log-panel__loading">
                                 <span class="btn__spinner"></span>
                                 <span>Logs werden geladen…</span>
                               </div>
-                            } @else if (getLogs(container.id).length === 0) {
-                              <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
                             } @else {
-                              <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                              <pre class="log-output">{{ lines.join('\n') }}</pre>
                             }
                           </div>
                         </td>
@@ -241,15 +240,10 @@
                     <button
                       class="btn btn--logs"
                       [class.btn--logs-active]="openLogsId === container.id"
-                      [disabled]="isLogsLoading(container.id)"
                       (click)="toggleLogs(container.id)"
                       title="Logs anzeigen"
                     >
-                      @if (isLogsLoading(container.id)) {
-                        <span class="btn__spinner"></span>
-                      } @else {
-                        📋
-                      }
+                      📋
                     </button>
 
                     @if (container.status === 'stopped') {
@@ -274,22 +268,26 @@
                 </tr>
 
                 @if (openLogsId === container.id) {
+                  @let lines = getLogs(container.id);
                   <tr class="container-logs-row">
                     <td colspan="5">
                       <div class="log-panel">
                         <div class="log-panel__header">
-                          <span class="log-panel__title">Logs — {{ container.name }}</span>
+                          <div class="log-panel__title-group">
+                            <span class="log-panel__title">Logs — {{ container.name }}</span>
+                            @if (isStreaming(container.id)) {
+                              <span class="log-panel__live">● LIVE</span>
+                            }
+                          </div>
                           <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
                         </div>
-                        @if (isLogsLoading(container.id)) {
+                        @if (lines.length === 0) {
                           <div class="log-panel__loading">
                             <span class="btn__spinner"></span>
                             <span>Logs werden geladen…</span>
                           </div>
-                        } @else if (getLogs(container.id).length === 0) {
-                          <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
                         } @else {
-                          <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                          <pre class="log-output">{{ lines.join('\n') }}</pre>
                         }
                       </div>
                     </td>

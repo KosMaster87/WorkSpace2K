@@ -6,15 +6,16 @@
  *   falscher Status (z.B. already running) → 409.
  *
  *   Endpunkte:
- *     GET    /api/docker/containers              → getContainers
- *     GET    /api/docker/containers/:id/stats    → getContainerStats
- *     GET    /api/docker/containers/:id/logs     → getContainerLogs
- *     POST   /api/docker/containers/:id/start    → startContainer
- *     POST   /api/docker/containers/:id/stop     → stopContainer
- *     DELETE /api/docker/containers/:id          → removeContainer
- *     GET    /api/docker/stacks                  → getStacks
- *     POST   /api/docker/stacks/:name/start      → startStack
- *     POST   /api/docker/stacks/:name/stop       → stopStack
+ *     GET    /api/docker/containers                      → getContainers
+ *     GET    /api/docker/containers/:id/stats            → getContainerStats
+ *     GET    /api/docker/containers/:id/logs             → getContainerLogs
+ *     GET    /api/docker/containers/:id/logs/stream      → streamContainerLogs (SSE)
+ *     POST   /api/docker/containers/:id/start            → startContainer
+ *     POST   /api/docker/containers/:id/stop             → stopContainer
+ *     DELETE /api/docker/containers/:id                  → removeContainer
+ *     GET    /api/docker/stacks                          → getStacks
+ *     POST   /api/docker/stacks/:name/start              → startStack
+ *     POST   /api/docker/stacks/:name/stop               → stopStack
  * @module DockerController
  */
 
@@ -236,6 +237,88 @@ export async function stopStack(req: Request, res: Response): Promise<void> {
     }
     const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
     res.status(503).json({ message: `Docker-Fehler: ${message}` });
+  }
+}
+
+/**
+ * Streamt Log-Zeilen eines Containers als Server-Sent Events (SSE).
+ * @description GET /api/docker/containers/:id/logs/stream?tail=100
+ *   Öffnet eine SSE-Verbindung und sendet neue Log-Zeilen als data-Events.
+ *   Bleibt offen solange der Container läuft (follow: true im Docker-Daemon).
+ *   Schließt automatisch wenn der Container stoppt oder der Client die Verbindung trennt.
+ *   Auth: Akzeptiert JWT via ?token=-Query (EventSource sendet keine Custom-Header).
+ *   Format: Docker-Multiplexing wird server-seitig entpackt — Client bekommt reine Zeilen.
+ * @async
+ * @param {Request} req - Express Request mit Container-ID und optionalem tail-Query.
+ * @param {Response} res - Express Response als SSE-Stream (text/event-stream).
+ * @returns {Promise<void>}
+ */
+export async function streamContainerLogs(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  const tail = parseInt((req.query as { tail?: string }).tail ?? '100', 10);
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no', // Nginx-Puffer deaktivieren für sofortige Übertragung
+  });
+  res.write(': connected\n\n');
+
+  let logStream: NodeJS.ReadableStream | null = null;
+
+  const cleanup = (): void => {
+    if (logStream) {
+      (logStream as { destroy?: () => void }).destroy?.();
+      logStream = null;
+    }
+    if (!res.writableEnded) res.end();
+  };
+
+  req.on('close', cleanup);
+
+  try {
+    logStream = await dockerService.streamContainerLogs(id, isNaN(tail) ? 100 : tail);
+    let buf = Buffer.alloc(0);
+
+    logStream.on('data', (chunk: Buffer) => {
+      buf = Buffer.concat([buf, chunk]);
+
+      // Docker-Multiplexing-Protokoll: 8-Byte-Header pro Frame
+      while (buf.length >= 8) {
+        const frameSize = buf.readUInt32BE(4);
+        if (buf.length < 8 + frameSize) break;
+
+        const content = buf
+          .subarray(8, 8 + frameSize)
+          .toString('utf-8')
+          .trimEnd();
+        buf = buf.subarray(8 + frameSize);
+
+        if (content && !res.writableEnded) {
+          content
+            .split('\n')
+            .filter((line) => line.trim())
+            .forEach((line) => {
+              res.write(`data: ${line}\n\n`);
+            });
+        }
+      }
+    });
+
+    logStream.on('end', cleanup);
+    logStream.on('error', (err: Error) => {
+      if (!res.writableEnded) {
+        res.write(`event: error\ndata: ${err.message}\n\n`);
+      }
+      cleanup();
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Stream-Fehler';
+    if (!res.writableEnded) {
+      res.write(`event: error\ndata: ${message}\n\n`);
+      res.end();
+    }
   }
 }
 

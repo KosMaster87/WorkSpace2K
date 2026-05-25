@@ -7,7 +7,8 @@
  *   Endpunkte:
  *     GET    /api/docker/containers              → Container-Liste
  *     GET    /api/docker/containers/:id/stats    → CPU, RAM, Uptime eines Containers
- *     GET    /api/docker/containers/:id/logs     → Letzte Log-Zeilen (tail=100)
+ *     GET    /api/docker/containers/:id/logs        → Letzte Log-Zeilen (tail=100)
+ *     GET    /api/docker/containers/:id/logs/stream → Live-Log-Stream (SSE, follow=true)
  *     POST   /api/docker/containers/:id/start    → Container starten
  *     POST   /api/docker/containers/:id/stop     → Container stoppen
  *     DELETE /api/docker/containers/:id          → Container löschen (muss gestoppt sein)
@@ -61,6 +62,12 @@ dockerRouter.delete('/containers/:id', dockerController.removeContainer);
  * Gibt die letzten Log-Zeilen eines Containers zurück (Query: ?tail=100).
  */
 dockerRouter.get('/containers/:id/logs', dockerController.getContainerLogs);
+
+/**
+ * GET /api/docker/containers/:id/logs/stream
+ * Streamt Live-Logs als Server-Sent Events (SSE). Auth via ?token= Query.
+ */
+dockerRouter.get('/containers/:id/logs/stream', dockerController.streamContainerLogs);
 
 /**
  * GET /api/docker/stacks

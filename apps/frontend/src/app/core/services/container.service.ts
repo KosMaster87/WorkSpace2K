@@ -143,4 +143,43 @@ export class ContainerService {
   stopStack(name: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/stop`, {});
   }
+
+  /**
+   * Öffnet einen SSE-Stream für Live-Logs eines Containers.
+   * @description GET /api/docker/containers/:id/logs/stream
+   *   Nutzt EventSource (SSE) — der JWT-Token wird als ?token=-Query-Parameter
+   *   übermittelt, da EventSource keine Custom-Header unterstützt.
+   *   Das Observable schließt die SSE-Verbindung automatisch beim Unsubscribe
+   *   (Teardown-Funktion). Für gestoppte Container schließt der Stream nach den
+   *   Tail-Zeilen sofort (complete). Für laufende Container bleibt er offen.
+   * @param {string} id - Container-ID (kurz, 12 Zeichen).
+   * @param {number} [tail=100] - Anzahl der letzten Zeilen als Ausgangspunkt.
+   * @returns {Observable<string>} Jede emittierte Log-Zeile als String.
+   */
+  streamContainerLogs(id: string, tail: number = 100): Observable<string> {
+    return new Observable<string>((observer) => {
+      const token = localStorage.getItem('ws2k_token') ?? '';
+      const url = `${this.apiUrl}/containers/${encodeURIComponent(id)}/logs/stream?tail=${tail}&token=${encodeURIComponent(token)}`;
+
+      const es = new EventSource(url);
+
+      es.onmessage = (event) => observer.next(event.data as string);
+
+      // Benutzerdefiniertes Error-Event vom Backend (z.B. Container nicht gefunden)
+      es.addEventListener('error', (event) => {
+        const data = (event as MessageEvent).data as string | undefined;
+        observer.error(new Error(data ?? 'Log-Stream-Fehler'));
+        es.close();
+      });
+
+      // Verbindungs-Fehler oder Server hat Verbindung geschlossen (Container gestoppt)
+      es.onerror = () => {
+        es.close(); // Verhindert automatischen Reconnect-Versuch
+        if (!observer.closed) observer.complete();
+      };
+
+      // Teardown: wird bei unsubscribe() aufgerufen → schließt die SSE-Verbindung
+      return () => es.close();
+    });
+  }
 }
