@@ -2,7 +2,8 @@
  * @fileoverview WorkSpace2K API Server — Express App Einstiegspunkt
  * @description Konfiguriert und startet den Express-Server.
  *   Middleware: helmet (Security-Header), cors (Frontend-Origin), express.json (Body-Parser).
- *   Routes: /api/auth (Login, Session), /api/health (Health-Check).
+ *   Routes: /api/auth (Login, Session), /api/docker (Container), /api/users (Admin),
+ *   /api/health (Health-Check).
  *   Port und CORS-Origin kommen aus .env.
  * @module Server
  */
@@ -13,6 +14,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { authRouter } from './routes/auth.routes';
 import { dockerRouter } from './routes/docker.routes';
+import { usersRouter } from './routes/users.routes';
 
 dotenv.config();
 
@@ -30,6 +32,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRouter);
 app.use('/api/docker', dockerRouter);
+app.use('/api/users', usersRouter);
 
 /**
  * Health-Check Endpoint — prüft ob der Server erreichbar ist.

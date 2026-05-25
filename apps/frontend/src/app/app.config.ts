@@ -18,6 +18,8 @@ import * as AuthEffects from './store/auth/auth.effects';
 import { authReducer } from './store/auth/auth.reducer';
 import * as DockerEffects from './store/docker/docker.effects';
 import { dockerReducer } from './store/docker/docker.reducer';
+import * as UsersEffects from './store/users/users.effects';
+import { usersReducer } from './store/users/users.reducer';
 
 /**
  * Globale Angular ApplicationConfig.
@@ -33,8 +35,8 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideStore({ auth: authReducer, docker: dockerReducer }),
-    provideEffects(AuthEffects, DockerEffects),
+    provideStore({ auth: authReducer, docker: dockerReducer, users: usersReducer }),
+    provideEffects(AuthEffects, DockerEffects, UsersEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
   ],
 };
