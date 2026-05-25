@@ -2,6 +2,7 @@
  * @fileoverview Auth Reducer Tests
  * @description Prüft alle State-Übergänge: login, loginSuccess, loginFailure,
  *   logout, restoreSessionSuccess, restoreSessionFailure.
+ *   isResolved wird gesetzt bei: loginSuccess, logout, restoreSession(Success|Failure).
  */
 
 import { AuthActions } from './auth.actions';
@@ -20,6 +21,7 @@ const loggedInState: AuthState = {
   token: 'test-token',
   isLoading: false,
   error: null,
+  isResolved: true,
 };
 
 describe('authReducer', () => {
@@ -51,6 +53,14 @@ describe('authReducer', () => {
       expect(state.user).toBeNull();
       expect(state.token).toBeNull();
     });
+
+    it('should not set isResolved', () => {
+      const state = authReducer(
+        initialAuthState,
+        AuthActions.login({ email: 'a@b.de', password: 'pw' }),
+      );
+      expect(state.isResolved).toBe(false);
+    });
   });
 
   describe('loginSuccess', () => {
@@ -77,6 +87,14 @@ describe('authReducer', () => {
         AuthActions.loginSuccess({ user: mockUser, token: 'jwt-abc' }),
       );
       expect(state.error).toBeNull();
+    });
+
+    it('should set isResolved to true', () => {
+      const state = authReducer(
+        initialAuthState,
+        AuthActions.loginSuccess({ user: mockUser, token: 'jwt-abc' }),
+      );
+      expect(state.isResolved).toBe(true);
     });
   });
 
@@ -105,9 +123,18 @@ describe('authReducer', () => {
   });
 
   describe('logout', () => {
-    it('should reset to initialAuthState', () => {
+    it('should reset user, token, isLoading, error to initial values', () => {
       const state = authReducer(loggedInState, AuthActions.logout());
-      expect(state).toEqual(initialAuthState);
+      expect(state.user).toBeNull();
+      expect(state.token).toBeNull();
+      expect(state.isLoading).toBe(false);
+      expect(state.error).toBeNull();
+    });
+
+    it('should set isResolved to true after logout', () => {
+      // Guards sollen nach Logout nicht blockieren — isResolved bleibt true
+      const state = authReducer(loggedInState, AuthActions.logout());
+      expect(state.isResolved).toBe(true);
     });
   });
 
@@ -120,12 +147,29 @@ describe('authReducer', () => {
       expect(state.user).toEqual(mockUser);
       expect(state.token).toBe('new-token');
     });
+
+    it('should set isResolved to true', () => {
+      const state = authReducer(
+        initialAuthState,
+        AuthActions.restoreSessionSuccess({ user: mockUser, token: 'new-token' }),
+      );
+      expect(state.isResolved).toBe(true);
+    });
   });
 
   describe('restoreSessionFailure', () => {
-    it('should reset to initialAuthState', () => {
+    it('should reset user, token, isLoading, error', () => {
       const state = authReducer(loggedInState, AuthActions.restoreSessionFailure());
-      expect(state).toEqual(initialAuthState);
+      expect(state.user).toBeNull();
+      expect(state.token).toBeNull();
+      expect(state.isLoading).toBe(false);
+      expect(state.error).toBeNull();
+    });
+
+    it('should set isResolved to true', () => {
+      // Session Restore ist abgeschlossen (fehlgeschlagen) — Guards dürfen jetzt entscheiden
+      const state = authReducer(loggedInState, AuthActions.restoreSessionFailure());
+      expect(state.isResolved).toBe(true);
     });
   });
 });

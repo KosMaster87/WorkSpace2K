@@ -1,6 +1,7 @@
 /**
  * @fileoverview authGuard Tests
  * @description Prüft: eingeloggte User durchgelassen, nicht-eingeloggte zu /login umgeleitet.
+ *   Guard wartet auf selectAuthResolved = true bevor er entscheidet (Session Restore).
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -13,7 +14,7 @@ import {
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { authGuard } from './auth.guard';
-import { selectIsAuthenticated } from '../../store/auth/auth.selectors';
+import { selectAuthResolved, selectIsAuthenticated } from '../../store/auth/auth.selectors';
 
 const mockRoute = {} as ActivatedRouteSnapshot;
 const mockState = {} as RouterStateSnapshot;
@@ -28,7 +29,8 @@ describe('authGuard', () => {
     store = TestBed.inject(MockStore);
   });
 
-  it('should return true when authenticated', async () => {
+  it('should return true when resolved and authenticated', async () => {
+    store.overrideSelector(selectAuthResolved, true);
     store.overrideSelector(selectIsAuthenticated, true);
     store.refreshState();
 
@@ -39,7 +41,8 @@ describe('authGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('should redirect to /login when not authenticated', async () => {
+  it('should redirect to /login when resolved but not authenticated', async () => {
+    store.overrideSelector(selectAuthResolved, true);
     store.overrideSelector(selectIsAuthenticated, false);
     store.refreshState();
 

@@ -1,12 +1,14 @@
 /**
  * @fileoverview Auth Selectors Tests
  * @description Prüft alle Selektoren: selectUser, selectToken,
- *   selectIsAuthenticated, selectIsAdmin, selectAuthLoading, selectAuthError.
+ *   selectIsAuthenticated, selectIsAdmin, selectAuthLoading, selectAuthError,
+ *   selectAuthResolved.
  */
 
 import {
   selectAuthError,
   selectAuthLoading,
+  selectAuthResolved,
   selectIsAdmin,
   selectIsAuthenticated,
   selectToken,
@@ -27,6 +29,7 @@ const mockState: { auth: AuthState } = {
     token: 'test-token',
     isLoading: false,
     error: null,
+    isResolved: true,
   },
 };
 
@@ -96,6 +99,16 @@ describe('Auth Selectors', () => {
     it('should return error message', () => {
       const withError = { auth: { ...mockState.auth, error: 'Invalid credentials' } };
       expect(selectAuthError(withError)).toBe('Invalid credentials');
+    });
+  });
+
+  describe('selectAuthResolved', () => {
+    it('should return true when session restore is complete', () => {
+      expect(selectAuthResolved(mockState)).toBe(true);
+    });
+
+    it('should return false on initial state (session restore pending)', () => {
+      expect(selectAuthResolved({ auth: { ...mockState.auth, isResolved: false } })).toBe(false);
     });
   });
 });
