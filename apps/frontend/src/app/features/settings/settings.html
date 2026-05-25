@@ -1,3 +1,78 @@
 <div class="settings">
-  <h2>Settings</h2>
+  <header class="settings__header">
+    <div>
+      <h2>Settings</h2>
+      <p class="settings__subtitle">App-Konfiguration</p>
+    </div>
+  </header>
+
+  <div class="settings__sections">
+    <!-- Darstellung -->
+    <section class="settings-section">
+      <h3 class="settings-section__title">Darstellung</h3>
+
+      <div class="setting-row">
+        <div class="setting-row__info">
+          <span class="setting-row__label">Theme</span>
+          <span class="setting-row__description">Wechselt zwischen Dark Mode und Light Mode.</span>
+        </div>
+        <button class="theme-toggle" (click)="appStore.toggleTheme()">
+          @if (appStore.theme() === 'dark') {
+            <span class="theme-toggle__icon">🌙</span>
+            <span class="theme-toggle__label">Dark</span>
+          } @else {
+            <span class="theme-toggle__icon">☀️</span>
+            <span class="theme-toggle__label">Light</span>
+          }
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-row__info">
+          <span class="setting-row__label">Sidebar</span>
+          <span class="setting-row__description">Sidebar ein- oder ausklappen.</span>
+        </div>
+        <button class="theme-toggle" (click)="appStore.toggleSidebar()">
+          @if (appStore.sidebarCollapsed()) {
+            <span class="theme-toggle__icon">▶</span>
+            <span class="theme-toggle__label">Eingeklappt</span>
+          } @else {
+            <span class="theme-toggle__icon">◀</span>
+            <span class="theme-toggle__label">Ausgeklappt</span>
+          }
+        </button>
+      </div>
+    </section>
+
+    <!-- App-Info -->
+    <section class="settings-section">
+      <h3 class="settings-section__title">App-Info</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-item__label">Applikation</span>
+          <span class="info-item__value">WorkSpace2K</span>
+        </div>
+        <div class="info-item">
+          <span class="info-item__label">Frontend</span>
+          <span class="info-item__value">Angular 21</span>
+        </div>
+        <div class="info-item">
+          <span class="info-item__label">State</span>
+          <span class="info-item__value">NgRx 19</span>
+        </div>
+        <div class="info-item">
+          <span class="info-item__label">Backend</span>
+          <span class="info-item__value">Express + TypeScript</span>
+        </div>
+        <div class="info-item">
+          <span class="info-item__label">Datenbank</span>
+          <span class="info-item__value">PostgreSQL 17</span>
+        </div>
+        <div class="info-item">
+          <span class="info-item__label">ORM</span>
+          <span class="info-item__value">Prisma v5</span>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>

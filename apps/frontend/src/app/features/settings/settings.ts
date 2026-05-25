@@ -1,7 +1,9 @@
 /**
- * @fileoverview Settings Feature — App-Konfiguration (nur ADMIN)
+ * @fileoverview Settings Feature — App-Konfiguration
  * @description Einstellungsseite — geschützt durch adminGuard.
- *   Geplant: App-weite Konfiguration via Settings API.
+ *   Aktuell: Darstellungs-Einstellungen (Theme dark/light).
+ *   Theme-State liegt im AppStore (NgRx Signal Store) — toggleTheme()
+ *   speichert die Auswahl in localStorage und setzt data-theme auf <html>.
  * @module SettingsComponent
  */
 
@@ -10,7 +12,7 @@ import { AppStore } from '../../store/app/app.store';
 
 /**
  * Einstellungsseite — nur für ADMIN-User zugänglich.
- * @description Setzt beim Laden den Seitentitel im Header.
+ * @description Zeigt App-weite Einstellungen: Theme-Auswahl, App-Info.
  *   Zugriff durch adminGuard in app.routes.ts geschützt.
  * @class SettingsComponent
  */
@@ -20,7 +22,7 @@ import { AppStore } from '../../store/app/app.store';
   styleUrl: './settings.scss',
 })
 export class SettingsComponent implements OnInit {
-  private readonly appStore = inject(AppStore);
+  readonly appStore = inject(AppStore);
 
   /**
    * Setzt den Seitentitel beim Laden der Seite.
