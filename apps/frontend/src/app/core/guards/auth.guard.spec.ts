@@ -4,12 +4,19 @@
  */
 
 import { TestBed } from '@angular/core/testing';
-import { UrlTree } from '@angular/router';
-import { provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { authGuard } from './auth.guard';
 import { selectIsAuthenticated } from '../../store/auth/auth.selectors';
+
+const mockRoute = {} as ActivatedRouteSnapshot;
+const mockState = {} as RouterStateSnapshot;
 
 describe('authGuard', () => {
   let store: MockStore;
@@ -26,7 +33,7 @@ describe('authGuard', () => {
     store.refreshState();
 
     const result = await TestBed.runInInjectionContext(() =>
-      firstValueFrom(authGuard({} as any, {} as any) as Observable<boolean | UrlTree>),
+      firstValueFrom(authGuard(mockRoute, mockState) as Observable<boolean | UrlTree>),
     );
 
     expect(result).toBe(true);
@@ -37,7 +44,7 @@ describe('authGuard', () => {
     store.refreshState();
 
     const result = await TestBed.runInInjectionContext(() =>
-      firstValueFrom(authGuard({} as any, {} as any) as Observable<boolean | UrlTree>),
+      firstValueFrom(authGuard(mockRoute, mockState) as Observable<boolean | UrlTree>),
     );
 
     expect(result).toBeInstanceOf(UrlTree);

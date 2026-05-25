@@ -35,8 +35,8 @@ export class LoginComponent {
   /** Signal: Fehlermeldung vom letzten Login-Versuch oder null. */
   readonly error = this.store.selectSignal(selectAuthError);
 
-  email = '';
-  password = '';
+  email: string = '';
+  password: string = '';
 
   /**
    * Dispatcht Login-Action mit E-Mail und Passwort.

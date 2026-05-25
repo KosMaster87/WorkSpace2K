@@ -12,7 +12,7 @@ import {
   selectToken,
   selectUser,
 } from './auth.selectors';
-import { User } from './auth.state';
+import { AuthState, User } from './auth.state';
 
 const mockUser: User = {
   id: '1',
@@ -21,7 +21,7 @@ const mockUser: User = {
   role: 'admin',
 };
 
-const mockState = {
+const mockState: { auth: AuthState } = {
   auth: {
     user: mockUser,
     token: 'test-token',

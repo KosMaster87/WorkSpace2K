@@ -8,7 +8,7 @@
 
 import { createReducer, on } from '@ngrx/store';
 import { AuthActions } from './auth.actions';
-import { initialAuthState } from './auth.state';
+import { AuthState, initialAuthState, User } from './auth.state';
 
 /**
  * Auth-Reducer — verarbeitet alle Auth-Actions und gibt neuen State zurück.
@@ -23,21 +23,24 @@ import { initialAuthState } from './auth.state';
 export const authReducer = createReducer(
   initialAuthState,
 
-  on(AuthActions.login, (state) => ({
+  on(AuthActions.login, (state: AuthState) => ({
     ...state,
     isLoading: true,
     error: null,
   })),
 
-  on(AuthActions.loginSuccess, (state, { user, token }) => ({
-    ...state,
-    user,
-    token,
-    isLoading: false,
-    error: null,
-  })),
+  on(
+    AuthActions.loginSuccess,
+    (state: AuthState, { user, token }: { user: User; token: string }) => ({
+      ...state,
+      user,
+      token,
+      isLoading: false,
+      error: null,
+    }),
+  ),
 
-  on(AuthActions.loginFailure, (state, { error }) => ({
+  on(AuthActions.loginFailure, (state: AuthState, { error }: { error: string }) => ({
     ...state,
     isLoading: false,
     error,
@@ -45,11 +48,14 @@ export const authReducer = createReducer(
 
   on(AuthActions.logout, () => initialAuthState),
 
-  on(AuthActions.restoreSessionSuccess, (state, { user, token }) => ({
-    ...state,
-    user,
-    token,
-  })),
+  on(
+    AuthActions.restoreSessionSuccess,
+    (state: AuthState, { user, token }: { user: User; token: string }) => ({
+      ...state,
+      user,
+      token,
+    }),
+  ),
 
   on(AuthActions.restoreSessionFailure, () => initialAuthState),
 );

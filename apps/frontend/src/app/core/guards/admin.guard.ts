@@ -21,11 +21,11 @@ import { selectIsAdmin } from '../../store/auth/auth.selectors';
  * @returns {Observable<boolean | UrlTree>} true oder UrlTree zu /dashboard.
  */
 export const adminGuard: CanActivateFn = () => {
-  const store = inject(Store);
-  const router = inject(Router);
+  const store: Store = inject(Store);
+  const router: Router = inject(Router);
 
   return store.select(selectIsAdmin).pipe(
     take(1),
-    map((isAdmin) => isAdmin || router.createUrlTree(['/dashboard'])),
+    map((isAdmin: boolean) => isAdmin || router.createUrlTree(['/dashboard'])),
   );
 };

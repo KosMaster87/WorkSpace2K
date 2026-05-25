@@ -24,11 +24,11 @@ import { selectToken } from '../../store/auth/auth.selectors';
  * @returns {Observable<HttpEvent>} Weitergereichte HTTP-Response.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const store = inject(Store);
+  const store: Store = inject(Store);
 
   return store.select(selectToken).pipe(
     take(1),
-    switchMap((token) => {
+    switchMap((token: string | null) => {
       if (!token) return next(req);
       return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
     }),

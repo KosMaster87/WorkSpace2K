@@ -12,6 +12,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthActions } from './auth.actions';
+import { User } from './auth.state';
 
 /**
  * Sendet Login-Request an die API und dispatcht Erfolg oder Fehler.
@@ -24,10 +25,15 @@ export const loginEffect = createEffect(
   (actions$ = inject(Actions), authService = inject(AuthService)) =>
     actions$.pipe(
       ofType(AuthActions.login),
-      switchMap(({ email, password }) =>
+      switchMap(({ email, password }: { email: string; password: string }) =>
         authService.login(email, password).pipe(
-          map(({ user, token }) => AuthActions.loginSuccess({ user, token })),
-          catchError((err) => of(AuthActions.loginFailure({ error: err.message }))),
+          map(({ user, token }: { user: User; token: string }) =>
+            AuthActions.loginSuccess({ user, token }),
+          ),
+          catchError((err: unknown) => {
+            const message = err instanceof Error ? err.message : 'Login fehlgeschlagen';
+            return of(AuthActions.loginFailure({ error: message }));
+          }),
         ),
       ),
     ),
@@ -41,11 +47,11 @@ export const loginEffect = createEffect(
  * @returns {Observable<never>} Kein Dispatch.
  */
 export const loginSuccessEffect = createEffect(
-  (actions$ = inject(Actions), router = inject(Router)) =>
+  (actions$ = inject(Actions), router: Router = inject(Router)) =>
     actions$.pipe(
       ofType(AuthActions.loginSuccess),
-      tap(({ token }) => localStorage.setItem('ws2k_token', token)),
-      tap(() => router.navigate(['/dashboard'])),
+      tap(({ token }: { token: string }) => localStorage.setItem('ws2k_token', token)),
+      tap(() => void router.navigate(['/dashboard'])),
     ),
   { functional: true, dispatch: false },
 );
@@ -56,11 +62,11 @@ export const loginSuccessEffect = createEffect(
  * @returns {Observable<never>} Kein Dispatch.
  */
 export const logoutEffect = createEffect(
-  (actions$ = inject(Actions), router = inject(Router)) =>
+  (actions$ = inject(Actions), router: Router = inject(Router)) =>
     actions$.pipe(
       ofType(AuthActions.logout),
       tap(() => localStorage.removeItem('ws2k_token')),
-      tap(() => router.navigate(['/login'])),
+      tap(() => void router.navigate(['/login'])),
     ),
   { functional: true, dispatch: false },
 );
@@ -74,12 +80,14 @@ export const logoutEffect = createEffect(
  * @returns {Observable<Action>} restoreSessionSuccess oder restoreSessionFailure.
  */
 export const restoreSessionEffect = createEffect(
-  (actions$ = inject(Actions), authService = inject(AuthService)) =>
+  (actions$ = inject(Actions), authService: AuthService = inject(AuthService)) =>
     actions$.pipe(
       ofType(AuthActions.restoreSession),
       switchMap(() =>
         authService.restoreSession().pipe(
-          map(({ user, token }) => AuthActions.restoreSessionSuccess({ user, token })),
+          map(({ user, token }: { user: User; token: string }) =>
+            AuthActions.restoreSessionSuccess({ user, token }),
+          ),
           catchError(() => of(AuthActions.restoreSessionFailure())),
         ),
       ),

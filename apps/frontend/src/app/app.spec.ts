@@ -10,7 +10,17 @@ import { App } from './app';
 import { AppStore } from './store/app/app.store';
 import { AuthActions } from './store/auth/auth.actions';
 
-const mockAppStore = {
+interface MockAppStore {
+  restoreTheme: ReturnType<typeof vi.fn>;
+  sidebarCollapsed: ReturnType<typeof vi.fn>;
+  theme: ReturnType<typeof vi.fn>;
+  pageTitle: ReturnType<typeof vi.fn>;
+  toggleTheme: ReturnType<typeof vi.fn>;
+  toggleSidebar: ReturnType<typeof vi.fn>;
+  setPageTitle: ReturnType<typeof vi.fn>;
+}
+
+const mockAppStore: MockAppStore = {
   restoreTheme: vi.fn(),
   sidebarCollapsed: vi.fn(() => false),
   theme: vi.fn(() => 'dark' as const),

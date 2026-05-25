@@ -4,12 +4,19 @@
  */
 
 import { TestBed } from '@angular/core/testing';
-import { UrlTree } from '@angular/router';
-import { provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { adminGuard } from './admin.guard';
 import { selectIsAdmin } from '../../store/auth/auth.selectors';
+
+const mockRoute = {} as ActivatedRouteSnapshot;
+const mockState = {} as RouterStateSnapshot;
 
 describe('adminGuard', () => {
   let store: MockStore;
@@ -26,7 +33,7 @@ describe('adminGuard', () => {
     store.refreshState();
 
     const result = await TestBed.runInInjectionContext(() =>
-      firstValueFrom(adminGuard({} as any, {} as any) as Observable<boolean | UrlTree>),
+      firstValueFrom(adminGuard(mockRoute, mockState) as Observable<boolean | UrlTree>),
     );
 
     expect(result).toBe(true);
@@ -37,7 +44,7 @@ describe('adminGuard', () => {
     store.refreshState();
 
     const result = await TestBed.runInInjectionContext(() =>
-      firstValueFrom(adminGuard({} as any, {} as any) as Observable<boolean | UrlTree>),
+      firstValueFrom(adminGuard(mockRoute, mockState) as Observable<boolean | UrlTree>),
     );
 
     expect(result).toBeInstanceOf(UrlTree);

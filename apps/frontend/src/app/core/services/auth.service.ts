@@ -62,9 +62,7 @@ export class AuthService {
    * @returns {Observable<AuthResponse>} Aktueller User und frisch signierter Token.
    */
   restoreSession(): Observable<AuthResponse> {
-    return this.http
-      .get<ApiAuthResponse>(`${this.apiUrl}/me`)
-      .pipe(map((res) => res.data));
+    return this.http.get<ApiAuthResponse>(`${this.apiUrl}/me`).pipe(map((res) => res.data));
   }
 
   /**

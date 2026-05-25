@@ -20,11 +20,11 @@ import { selectIsAuthenticated } from '../../store/auth/auth.selectors';
  * @returns {Observable<boolean | UrlTree>} true oder UrlTree zu /dashboard.
  */
 export const guestGuard: CanActivateFn = () => {
-  const store = inject(Store);
-  const router = inject(Router);
+  const store: Store = inject(Store);
+  const router: Router = inject(Router);
 
   return store.select(selectIsAuthenticated).pipe(
     take(1),
-    map((isAuth) => !isAuth || router.createUrlTree(['/dashboard'])),
+    map((isAuth: boolean) => !isAuth || router.createUrlTree(['/dashboard'])),
   );
 };

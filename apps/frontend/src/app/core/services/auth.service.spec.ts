@@ -18,7 +18,7 @@ const mockUser: User = {
   role: 'admin',
 };
 
-const mockApiResponse = {
+const mockApiResponse: { data: { user: User; token: string } } = {
   data: { user: mockUser, token: 'test-jwt-token' },
 };
 

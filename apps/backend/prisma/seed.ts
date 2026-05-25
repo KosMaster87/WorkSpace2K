@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Datenbank Seed — initialen Admin-User anlegen
+ * @description Legt einen Admin-User aus Umgebungsvariablen an.
+ *   SEED_ADMIN_EMAIL und SEED_ADMIN_PASSWORD müssen in .env gesetzt sein.
+ *   Idempotent — überspringt wenn User bereits existiert.
+ * @module Seed
+ */
+
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
