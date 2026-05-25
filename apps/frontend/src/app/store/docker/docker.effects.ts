@@ -147,8 +147,7 @@ export const loadContainerLogsEffect = createEffect(
         containerService.getContainerLogs(id, tail).pipe(
           map((lines: string[]) => DockerActions.loadContainerLogsSuccess({ id, lines })),
           catchError((err: unknown) => {
-            const error =
-              err instanceof Error ? err.message : 'Logs konnten nicht geladen werden';
+            const error = err instanceof Error ? err.message : 'Logs konnten nicht geladen werden';
             return of(DockerActions.loadContainerLogsFailure({ id, error }));
           }),
         ),
