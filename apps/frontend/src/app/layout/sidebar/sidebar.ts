@@ -53,6 +53,7 @@ export class SidebarComponent {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: '⊞', route: '/dashboard' },
     { label: 'Docker', icon: '🐳', route: '/services' },
+    { label: 'Destinations', icon: '🔗', route: '/destinations' },
     { label: 'Monitoring', icon: '📊', route: '/monitoring' },
     { label: 'Backups', icon: '💾', route: '/backups' },
     { label: 'Settings', icon: '⚡', route: '/settings', adminOnly: true },

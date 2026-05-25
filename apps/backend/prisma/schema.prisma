@@ -23,3 +23,18 @@ enum Role {
   ADMIN
   USER
 }
+
+model Destination {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  icon        String?
+  category    String?
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("destinations")
+}

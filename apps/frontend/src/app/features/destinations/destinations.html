@@ -1,0 +1,176 @@
+<div class="destinations">
+  <header class="destinations__header">
+    <div>
+      <h2>Destinations</h2>
+      <p class="destinations__subtitle">Schnellzugriff auf alle Self-hosted Services</p>
+    </div>
+    @if (isAdmin()) {
+      <button class="btn btn--primary" (click)="openCreateForm()">+ Neue Destination</button>
+    }
+  </header>
+
+  @if (error()) {
+    <div class="destinations__error"><strong>Fehler:</strong> {{ error() }}</div>
+  }
+
+  @if (showForm) {
+    <div class="dest-form">
+      <h3 class="dest-form__title">
+        {{ editingId ? 'Destination bearbeiten' : 'Neue Destination anlegen' }}
+      </h3>
+      <div class="dest-form__fields">
+        <div class="form-field">
+          <label class="form-field__label" for="destName">Name *</label>
+          <input
+            id="destName"
+            class="form-field__input"
+            type="text"
+            [(ngModel)]="formData.name"
+            placeholder="Nginx Proxy Manager"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="destUrl">URL *</label>
+          <input
+            id="destUrl"
+            class="form-field__input"
+            type="url"
+            [(ngModel)]="formData.url"
+            placeholder="http://localhost:81"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="destIcon">Icon (Emoji)</label>
+          <input
+            id="destIcon"
+            class="form-field__input"
+            type="text"
+            [(ngModel)]="formData.icon"
+            placeholder="🔀"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="destCategory">Kategorie</label>
+          <input
+            id="destCategory"
+            class="form-field__input"
+            type="text"
+            [(ngModel)]="formData.category"
+            placeholder="Infrastruktur"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field form-field--wide">
+          <label class="form-field__label" for="destDescription">Beschreibung</label>
+          <input
+            id="destDescription"
+            class="form-field__input"
+            type="text"
+            [(ngModel)]="formData.description"
+            placeholder="Kurze Beschreibung des Services"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="destOrder">Reihenfolge</label>
+          <input
+            id="destOrder"
+            class="form-field__input"
+            type="number"
+            [(ngModel)]="formData.sortOrder"
+            placeholder="0"
+            min="0"
+          />
+        </div>
+      </div>
+      <div class="dest-form__actions">
+        <button
+          class="btn btn--primary"
+          [disabled]="isCreating() || !formData.name || !formData.url"
+          (click)="submitForm()"
+        >
+          @if (isCreating()) {
+            <span class="loading-spinner loading-spinner--sm"></span>
+          }
+          {{ editingId ? 'Speichern' : 'Anlegen' }}
+        </button>
+        <button class="btn btn--ghost" (click)="closeForm()">Abbrechen</button>
+      </div>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="destinations__loading">
+      <span class="loading-spinner"></span>
+      <span>Destinations werden geladen…</span>
+    </div>
+  } @else if (destinations().length === 0) {
+    <div class="destinations__empty">
+      <span class="destinations__empty-icon">🔗</span>
+      <p>Keine Destinations konfiguriert.</p>
+      @if (isAdmin()) {
+        <p class="destinations__empty-hint">Klicke auf „+ Neue Destination" um zu starten.</p>
+      }
+    </div>
+  } @else {
+    @for (group of groups(); track group.category) {
+      <section class="dest-group">
+        <h3 class="dest-group__title">{{ group.category }}</h3>
+        <div class="dest-grid">
+          @for (dest of group.items; track dest.id) {
+            <div
+              class="dest-card"
+              [class.dest-card--pending]="isPending(dest.id)"
+              (click)="openService(dest.url)"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="openService(dest.url)"
+              [title]="dest.url"
+            >
+              <div class="dest-card__icon">{{ dest.icon || '🔗' }}</div>
+              <div class="dest-card__body">
+                <span class="dest-card__name">{{ dest.name }}</span>
+                @if (dest.description) {
+                  <span class="dest-card__desc">{{ dest.description }}</span>
+                }
+                <span class="dest-card__url">{{ dest.url }}</span>
+              </div>
+
+              @if (isAdmin()) {
+                <div class="dest-card__actions" (click)="$event.stopPropagation()">
+                  @if (confirmDeleteId === dest.id) {
+                    <span class="delete-confirm">
+                      <span class="delete-confirm__label">Sicher?</span>
+                      <button class="btn btn--danger btn--sm" (click)="confirmDelete()">Löschen</button>
+                      <button class="btn btn--ghost btn--sm" (click)="cancelDelete()">Abbrechen</button>
+                    </span>
+                  } @else {
+                    <button
+                      class="btn btn--ghost btn--sm btn--icon"
+                      [disabled]="isPending(dest.id)"
+                      (click)="openEditForm(dest)"
+                      title="Bearbeiten"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      class="btn btn--ghost btn--sm btn--icon"
+                      [disabled]="isPending(dest.id)"
+                      (click)="requestDelete(dest.id)"
+                      title="Löschen"
+                    >
+                      🗑
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
