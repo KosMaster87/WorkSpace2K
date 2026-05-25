@@ -10,7 +10,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { ContainerStats, DockerService } from '@workspace2k/shared';
+import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared';
 
 /**
  * Rohes API-Antwortformat für die Container-Liste.
@@ -18,6 +18,14 @@ import { ContainerStats, DockerService } from '@workspace2k/shared';
  */
 interface ApiContainersResponse {
   data: DockerService[];
+}
+
+/**
+ * Rohes API-Antwortformat für die Stacks-Liste.
+ * @private
+ */
+interface ApiStacksResponse {
+  data: DockerStack[];
 }
 
 /**
@@ -105,5 +113,34 @@ export class ContainerService {
         params: { tail: tail.toString() },
       })
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Lädt alle Docker-Stacks (Container nach Compose-Projekt gruppiert).
+   * @description GET /api/docker/stacks — entpackt data-Array.
+   * @returns {Observable<DockerStack[]>} Liste aller Stacks.
+   */
+  getStacks(): Observable<DockerStack[]> {
+    return this.http.get<ApiStacksResponse>(`${this.apiUrl}/stacks`).pipe(map((res) => res.data));
+  }
+
+  /**
+   * Startet alle gestoppten Container eines Stacks.
+   * @description POST /api/docker/stacks/:name/start
+   * @param {string} name - Docker Compose Projekt-Name.
+   * @returns {Observable<void>}
+   */
+  startStack(name: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/start`, {});
+  }
+
+  /**
+   * Stoppt alle laufenden Container eines Stacks.
+   * @description POST /api/docker/stacks/:name/stop
+   * @param {string} name - Docker Compose Projekt-Name.
+   * @returns {Observable<void>}
+   */
+  stopStack(name: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/stop`, {});
   }
 }

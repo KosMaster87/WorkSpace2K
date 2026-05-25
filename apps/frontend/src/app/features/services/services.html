@@ -1,7 +1,9 @@
 <div class="services">
   <header class="services__header">
-    <h2>Services</h2>
-    <p class="services__subtitle">Docker-Container verwalten</p>
+    <div>
+      <h2>Services</h2>
+      <p class="services__subtitle">Docker-Container verwalten</p>
+    </div>
   </header>
 
   @if (isLoading()) {
@@ -16,114 +18,288 @@
   }
 
   @if (!isLoading()) {
-    @if (containers().length === 0) {
-      <div class="services__empty">Keine Container gefunden.</div>
-    } @else {
-      <div class="services__table-wrapper">
-        <table class="container-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Image</th>
-              <th>Status</th>
-              <th>Port</th>
-              <th>Aktionen</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (container of containers(); track container.id) {
-              <tr class="container-table__row container-table__row--{{ container.status }}">
-                <td class="container-table__name">{{ container.name }}</td>
-                <td class="container-table__image">{{ container.image }}</td>
-                <td>
-                  <span class="status-badge status-badge--{{ container.status }}">
-                    {{ container.status }}
+    @if (appStore.dockerView() === 'stacks') {
+      <!-- ── Stacks-Ansicht ────────────────────────────────────────────────── -->
+      @if (stacksLoading() && stacks().length === 0) {
+        <div class="services__loading">
+          <span class="loading-spinner"></span>
+          <span>Stacks werden geladen…</span>
+        </div>
+      } @else if (stacks().length === 0) {
+        <div class="services__empty">Keine Container gefunden.</div>
+      } @else {
+        <div class="stacks-list">
+          @for (stack of stacks(); track stack.name) {
+            @let isStandalone = stack.name === '__standalone__';
+            <div class="stack-card">
+              <div class="stack-card__header">
+                <div class="stack-card__info">
+                  <span class="stack-card__name">
+                    {{ isStandalone ? 'Standalone' : stack.name }}
                   </span>
-                </td>
-                <td class="container-table__port">
-                  {{ container.port ?? '—' }}
-                </td>
-                <td class="container-table__actions">
-                  @if (container.status !== 'running') {
-                    <button class="btn btn--start" [disabled]="isPending(container.id)" (click)="onStart(container.id)">
-                      @if (isPending(container.id)) {
-                        <span class="btn__spinner"></span>
-                      } @else {
-                        ▶ Start
-                      }
-                    </button>
-                  }
-                  @if (container.status === 'running') {
-                    <button class="btn btn--stop" [disabled]="isPending(container.id)" (click)="onStop(container.id)">
-                      @if (isPending(container.id)) {
-                        <span class="btn__spinner"></span>
-                      } @else {
-                        ■ Stop
-                      }
-                    </button>
-                  }
-
-                  <button
-                    class="btn btn--logs"
-                    [class.btn--logs-active]="openLogsId === container.id"
-                    [disabled]="isLogsLoading(container.id)"
-                    (click)="toggleLogs(container.id)"
-                    title="Logs anzeigen"
-                  >
-                    @if (isLogsLoading(container.id)) {
-                      <span class="btn__spinner"></span>
-                    } @else {
-                      📋
-                    }
-                  </button>
-
-                  @if (container.status === 'stopped') {
-                    @if (confirmDeleteId === container.id) {
-                      <span class="delete-confirm">
-                        <span class="delete-confirm__label">Löschen?</span>
-                        <button class="btn btn--danger" (click)="confirmDelete()">Ja</button>
-                        <button class="btn btn--cancel" (click)="cancelDelete()">Nein</button>
-                      </span>
-                    } @else {
+                  <span class="stack-card__meta">
+                    {{ stack.containers.length }}
+                    {{ stack.containers.length === 1 ? 'Container' : 'Container' }}
+                  </span>
+                </div>
+                <div class="stack-card__actions">
+                  <span class="status-badge status-badge--{{ stack.status }}">
+                    {{ stack.status }}
+                  </span>
+                  @if (!isStandalone) {
+                    @if (stack.status !== 'running') {
                       <button
-                        class="btn btn--delete"
-                        [disabled]="isPending(container.id)"
-                        (click)="requestDelete(container.id)"
-                        title="Container löschen"
+                        class="btn btn--start"
+                        [disabled]="isStackPending(stack.name)"
+                        (click)="onStartStack(stack.name)"
                       >
-                        🗑️
+                        @if (isStackPending(stack.name)) {
+                          <span class="btn__spinner"></span>
+                        } @else {
+                          ▶ Start All
+                        }
+                      </button>
+                    }
+                    @if (stack.status !== 'stopped') {
+                      <button
+                        class="btn btn--stop"
+                        [disabled]="isStackPending(stack.name)"
+                        (click)="onStopStack(stack.name)"
+                      >
+                        @if (isStackPending(stack.name)) {
+                          <span class="btn__spinner"></span>
+                        } @else {
+                          ■ Stop All
+                        }
                       </button>
                     }
                   }
-                </td>
-              </tr>
+                </div>
+              </div>
 
-              @if (openLogsId === container.id) {
-                <tr class="container-logs-row">
-                  <td colspan="5">
-                    <div class="log-panel">
-                      <div class="log-panel__header">
-                        <span class="log-panel__title">Logs — {{ container.name }}</span>
-                        <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
-                      </div>
-                      @if (isLogsLoading(container.id)) {
-                        <div class="log-panel__loading">
+              <table class="container-table container-table--compact">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Image</th>
+                    <th>Status</th>
+                    <th>Port</th>
+                    <th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (container of stack.containers; track container.id) {
+                    <tr class="container-table__row container-table__row--{{ container.status }}">
+                      <td class="container-table__name">{{ container.name }}</td>
+                      <td class="container-table__image">{{ container.image }}</td>
+                      <td>
+                        <span class="status-badge status-badge--{{ container.status }}">
+                          {{ container.status }}
+                        </span>
+                      </td>
+                      <td class="container-table__port">{{ container.port ?? '—' }}</td>
+                      <td class="container-table__actions">
+                        @if (container.status !== 'running') {
+                          <button
+                            class="btn btn--start"
+                            [disabled]="isPending(container.id)"
+                            (click)="onStart(container.id)"
+                          >
+                            @if (isPending(container.id)) {
+                              <span class="btn__spinner"></span>
+                            } @else {
+                              ▶
+                            }
+                          </button>
+                        }
+                        @if (container.status === 'running') {
+                          <button
+                            class="btn btn--stop"
+                            [disabled]="isPending(container.id)"
+                            (click)="onStop(container.id)"
+                          >
+                            @if (isPending(container.id)) {
+                              <span class="btn__spinner"></span>
+                            } @else {
+                              ■
+                            }
+                          </button>
+                        }
+                        <button
+                          class="btn btn--logs"
+                          [class.btn--logs-active]="openLogsId === container.id"
+                          [disabled]="isLogsLoading(container.id)"
+                          (click)="toggleLogs(container.id)"
+                          title="Logs anzeigen"
+                        >
+                          @if (isLogsLoading(container.id)) {
+                            <span class="btn__spinner"></span>
+                          } @else {
+                            📋
+                          }
+                        </button>
+                        @if (container.status === 'stopped') {
+                          @if (confirmDeleteId === container.id) {
+                            <span class="delete-confirm">
+                              <span class="delete-confirm__label">Löschen?</span>
+                              <button class="btn btn--danger" (click)="confirmDelete()">Ja</button>
+                              <button class="btn btn--cancel" (click)="cancelDelete()">Nein</button>
+                            </span>
+                          } @else {
+                            <button
+                              class="btn btn--delete"
+                              [disabled]="isPending(container.id)"
+                              (click)="requestDelete(container.id)"
+                              title="Container löschen"
+                            >
+                              🗑️
+                            </button>
+                          }
+                        }
+                      </td>
+                    </tr>
+                    @if (openLogsId === container.id) {
+                      <tr class="container-logs-row">
+                        <td colspan="5">
+                          <div class="log-panel">
+                            <div class="log-panel__header">
+                              <span class="log-panel__title">Logs — {{ container.name }}</span>
+                              <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
+                            </div>
+                            @if (isLogsLoading(container.id)) {
+                              <div class="log-panel__loading">
+                                <span class="btn__spinner"></span>
+                                <span>Logs werden geladen…</span>
+                              </div>
+                            } @else if (getLogs(container.id).length === 0) {
+                              <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
+                            } @else {
+                              <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <!-- ── Flat-Ansicht (Tabelle) ────────────────────────────────────────── -->
+      @if (containers().length === 0) {
+        <div class="services__empty">Keine Container gefunden.</div>
+      } @else {
+        <div class="services__table-wrapper">
+          <table class="container-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Port</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (container of containers(); track container.id) {
+                <tr class="container-table__row container-table__row--{{ container.status }}">
+                  <td class="container-table__name">{{ container.name }}</td>
+                  <td class="container-table__image">{{ container.image }}</td>
+                  <td>
+                    <span class="status-badge status-badge--{{ container.status }}">
+                      {{ container.status }}
+                    </span>
+                  </td>
+                  <td class="container-table__port">{{ container.port ?? '—' }}</td>
+                  <td class="container-table__actions">
+                    @if (container.status !== 'running') {
+                      <button
+                        class="btn btn--start"
+                        [disabled]="isPending(container.id)"
+                        (click)="onStart(container.id)"
+                      >
+                        @if (isPending(container.id)) {
                           <span class="btn__spinner"></span>
-                          <span>Logs werden geladen…</span>
-                        </div>
-                      } @else if (getLogs(container.id).length === 0) {
-                        <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
+                        } @else {
+                          ▶ Start
+                        }
+                      </button>
+                    }
+                    @if (container.status === 'running') {
+                      <button class="btn btn--stop" [disabled]="isPending(container.id)" (click)="onStop(container.id)">
+                        @if (isPending(container.id)) {
+                          <span class="btn__spinner"></span>
+                        } @else {
+                          ■ Stop
+                        }
+                      </button>
+                    }
+
+                    <button
+                      class="btn btn--logs"
+                      [class.btn--logs-active]="openLogsId === container.id"
+                      [disabled]="isLogsLoading(container.id)"
+                      (click)="toggleLogs(container.id)"
+                      title="Logs anzeigen"
+                    >
+                      @if (isLogsLoading(container.id)) {
+                        <span class="btn__spinner"></span>
                       } @else {
-                        <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                        📋
                       }
-                    </div>
+                    </button>
+
+                    @if (container.status === 'stopped') {
+                      @if (confirmDeleteId === container.id) {
+                        <span class="delete-confirm">
+                          <span class="delete-confirm__label">Löschen?</span>
+                          <button class="btn btn--danger" (click)="confirmDelete()">Ja</button>
+                          <button class="btn btn--cancel" (click)="cancelDelete()">Nein</button>
+                        </span>
+                      } @else {
+                        <button
+                          class="btn btn--delete"
+                          [disabled]="isPending(container.id)"
+                          (click)="requestDelete(container.id)"
+                          title="Container löschen"
+                        >
+                          🗑️
+                        </button>
+                      }
+                    }
                   </td>
                 </tr>
+
+                @if (openLogsId === container.id) {
+                  <tr class="container-logs-row">
+                    <td colspan="5">
+                      <div class="log-panel">
+                        <div class="log-panel__header">
+                          <span class="log-panel__title">Logs — {{ container.name }}</span>
+                          <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
+                        </div>
+                        @if (isLogsLoading(container.id)) {
+                          <div class="log-panel__loading">
+                            <span class="btn__spinner"></span>
+                            <span>Logs werden geladen…</span>
+                          </div>
+                        } @else if (getLogs(container.id).length === 0) {
+                          <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
+                        } @else {
+                          <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
               }
-            }
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      }
     }
   }
 </div>

@@ -8,15 +8,18 @@
 import {
   selectAllContainers,
   selectAllLogs,
+  selectAllStacks,
   selectAllStats,
   selectDockerError,
   selectDockerLoading,
   selectLogsPendingIds,
   selectPendingIds,
   selectRunningCount,
+  selectStackPendingNames,
+  selectStacksLoading,
   selectStoppedCount,
 } from './docker.selectors';
-import { ContainerStats, DockerService, DockerState } from './docker.state';
+import { ContainerStats, DockerService, DockerStack, DockerState } from './docker.state';
 
 const running: DockerService = {
   id: 'c1',
@@ -46,6 +49,9 @@ const buildState = (partial: Partial<DockerState>): { docker: DockerState } => (
     pendingIds: [],
     logsPendingIds: [],
     error: null,
+    stacks: [],
+    stacksLoading: false,
+    stackPendingNames: [],
     ...partial,
   },
 });
@@ -160,6 +166,50 @@ describe('Docker Selectors', () => {
       expect(selectLogsPendingIds(buildState({ logsPendingIds: ['c1', 'c3'] }))).toEqual([
         'c1',
         'c3',
+      ]);
+    });
+  });
+
+  // ── selectAllStacks ────────────────────────────────────────────────────────
+
+  describe('selectAllStacks', () => {
+    const mockStack: DockerStack = {
+      name: 'vaultwarden',
+      containers: [running],
+      status: 'running',
+    };
+
+    it('should return empty array on initial state', () => {
+      expect(selectAllStacks(buildState({}))).toEqual([]);
+    });
+
+    it('should return stacks array', () => {
+      expect(selectAllStacks(buildState({ stacks: [mockStack] }))).toEqual([mockStack]);
+    });
+  });
+
+  // ── selectStacksLoading ────────────────────────────────────────────────────
+
+  describe('selectStacksLoading', () => {
+    it('should return false on initial state', () => {
+      expect(selectStacksLoading(buildState({}))).toBe(false);
+    });
+
+    it('should return true when stacks are loading', () => {
+      expect(selectStacksLoading(buildState({ stacksLoading: true }))).toBe(true);
+    });
+  });
+
+  // ── selectStackPendingNames ────────────────────────────────────────────────
+
+  describe('selectStackPendingNames', () => {
+    it('should return empty array on initial state', () => {
+      expect(selectStackPendingNames(buildState({}))).toEqual([]);
+    });
+
+    it('should return pending stack names', () => {
+      expect(selectStackPendingNames(buildState({ stackPendingNames: ['vaultwarden'] }))).toEqual([
+        'vaultwarden',
       ]);
     });
   });

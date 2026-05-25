@@ -8,7 +8,7 @@
  */
 
 import Dockerode from 'dockerode';
-import { ContainerStats, DockerService, ServiceStatus } from '@workspace2k/shared';
+import { ContainerStats, DockerService, DockerStack, ServiceStatus } from '@workspace2k/shared';
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -106,7 +106,89 @@ export async function listContainers(): Promise<DockerService[]> {
     image: c.Image,
     status: mapStatus(c.State),
     port: c.Ports.find((p) => p.PublicPort !== undefined)?.PublicPort,
+    stackName: (c.Labels as Record<string, string>)['com.docker.compose.project'] ?? undefined,
   }));
+}
+
+/**
+ * Gibt alle Docker-Container gruppiert nach Compose-Projekt zurück.
+ * @description Container mit dem Label `com.docker.compose.project` werden zu einem
+ *   Stack zusammengefasst. Container ohne Label erscheinen unter '__standalone__'.
+ *   Stack-Status: 'running' wenn alle laufen, 'stopped' wenn alle gestoppt,
+ *   'unknown' wenn gemischt.
+ * @async
+ * @function listStacks
+ * @returns {Promise<DockerStack[]>} Liste aller Stacks, alphabetisch sortiert.
+ *   Standalone-Container stehen immer zuletzt.
+ * @throws {Error} Wenn der Docker Socket nicht erreichbar ist.
+ */
+export async function listStacks(): Promise<DockerStack[]> {
+  const containers = await listContainers();
+
+  const stackMap = new Map<string, DockerService[]>();
+
+  for (const container of containers) {
+    const key = container.stackName ?? '__standalone__';
+    if (!stackMap.has(key)) stackMap.set(key, []);
+    stackMap.get(key)!.push(container);
+  }
+
+  const stacks: DockerStack[] = [];
+
+  for (const [name, stackContainers] of stackMap) {
+    const allRunning = stackContainers.every((c) => c.status === 'running');
+    const allStopped = stackContainers.every((c) => c.status === 'stopped');
+    const status: ServiceStatus = allRunning ? 'running' : allStopped ? 'stopped' : 'unknown';
+    stacks.push({ name, containers: stackContainers, status });
+  }
+
+  return stacks.sort((a, b) => {
+    if (a.name === '__standalone__') return 1;
+    if (b.name === '__standalone__') return -1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+/**
+ * Startet alle gestoppten Container eines Stacks.
+ * @description Startet alle Container mit dem gegebenen `com.docker.compose.project`-Label
+ *   die noch nicht laufen. Laufende Container werden übersprungen.
+ * @async
+ * @function startStack
+ * @param {string} name - Docker Compose Projekt-Name.
+ * @returns {Promise<void>}
+ * @throws {Error} Wenn der Docker Socket nicht erreichbar ist.
+ */
+export async function startStack(name: string): Promise<void> {
+  const containers = await listContainers();
+  const stackContainers = containers.filter((c) => c.stackName === name);
+
+  await Promise.all(
+    stackContainers
+      .filter((c) => c.status !== 'running')
+      .map((c) => docker.getContainer(c.id).start()),
+  );
+}
+
+/**
+ * Stoppt alle laufenden Container eines Stacks.
+ * @description Stoppt alle Container mit dem gegebenen `com.docker.compose.project`-Label
+ *   die noch laufen. Gestoppte Container werden übersprungen.
+ * @async
+ * @function stopStack
+ * @param {string} name - Docker Compose Projekt-Name.
+ * @returns {Promise<void>}
+ * @throws {Error} Wenn der Docker Socket nicht erreichbar ist.
+ */
+export async function stopStack(name: string): Promise<void> {
+  const containers = await listContainers();
+  const stackContainers = containers.filter((c) => c.stackName === name);
+
+  await Promise.all(
+    stackContainers
+      .filter((c) => c.status === 'running')
+      .map((c) => docker.getContainer(c.id).stop()),
+  );
 }
 
 /**

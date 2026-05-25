@@ -1,9 +1,10 @@
 /**
  * @fileoverview App Signal Store — Synchroner UI-State
  * @description NgRx Signal Store für den globalen UI-State.
- *   Verwaltet: Theme (light/dark), Sidebar-Zustand, aktueller Seitentitel.
+ *   Verwaltet: Theme (light/dark), Sidebar-Zustand, aktueller Seitentitel,
+ *   Docker-Ansicht (stacks/flat).
  *   Synchron und reaktiv — kein Boilerplate wie beim klassischen NgRx Store.
- *   Persistenz von Theme in localStorage ('ws2k_theme').
+ *   Persistenz von Theme und dockerView in localStorage.
  * @module AppStore
  */
 
@@ -13,6 +14,13 @@ import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
  * Mögliche App-Themes.
  */
 export type Theme = 'light' | 'dark';
+
+/**
+ * Mögliche Anzeigemodi der Docker-Seite.
+ *   'stacks' — Container nach Compose-Projekt gruppiert als Karten.
+ *   'flat'   — Flache Tabelle aller Container (klassische Ansicht).
+ */
+export type DockerView = 'stacks' | 'flat';
 
 /**
  * Zustandsstruktur des App Signal Store.
@@ -25,13 +33,16 @@ interface AppState {
   sidebarCollapsed: boolean;
   /** Aktuell angezeigter Seitentitel im Header. */
   pageTitle: string;
+  /** Anzeigemodus der Docker-Seite — gespeichert in localStorage. */
+  dockerView: DockerView;
 }
 
-/** Initialzustand: Dark Mode, Sidebar ausgeklappt, Titel 'Dashboard'. */
+/** Initialzustand: Dark Mode, Sidebar ausgeklappt, Titel 'Dashboard', Stacks-Ansicht. */
 const initialState: AppState = {
   theme: 'dark',
   sidebarCollapsed: false,
   pageTitle: 'Dashboard',
+  dockerView: 'stacks',
 };
 
 /**
@@ -83,6 +94,28 @@ export const AppStore = signalStore(
       const saved = (localStorage.getItem('ws2k_theme') as Theme) ?? 'dark';
       patchState(store, { theme: saved });
       document.documentElement.setAttribute('data-theme', saved);
+    },
+
+    /**
+     * Setzt den Anzeigemodus der Docker-Seite und speichert ihn in localStorage.
+     * @description Persistiert die Auswahl — bleibt nach Seiten-Refresh erhalten.
+     * @param {DockerView} view - Neuer Anzeigemodus ('stacks' oder 'flat').
+     * @returns {void}
+     */
+    setDockerView(view: DockerView): void {
+      patchState(store, { dockerView: view });
+      localStorage.setItem('ws2k_docker_view', view);
+    },
+
+    /**
+     * Stellt den gespeicherten Docker-Anzeigemodus aus localStorage wieder her.
+     * @description Wird beim App-Start in app.ts ngOnInit aufgerufen.
+     *   Fallback: 'stacks' wenn kein Wert in localStorage gespeichert ist.
+     * @returns {void}
+     */
+    restoreDockerView(): void {
+      const saved = (localStorage.getItem('ws2k_docker_view') as DockerView) ?? 'stacks';
+      patchState(store, { dockerView: saved });
     },
   })),
 );

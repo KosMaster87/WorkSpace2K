@@ -12,6 +12,9 @@
  *     POST   /api/docker/containers/:id/start    → startContainer
  *     POST   /api/docker/containers/:id/stop     → stopContainer
  *     DELETE /api/docker/containers/:id          → removeContainer
+ *     GET    /api/docker/stacks                  → getStacks
+ *     POST   /api/docker/stacks/:name/start      → startStack
+ *     POST   /api/docker/stacks/:name/stop       → stopStack
  * @module DockerController
  */
 
@@ -155,6 +158,80 @@ export async function removeContainer(req: Request, res: Response): Promise<void
     }
     if (status === 404) {
       res.status(404).json({ message: `Container ${id} nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker-Fehler: ${message}` });
+  }
+}
+
+/**
+ * Gibt alle Docker-Stacks zurück (nach Compose-Projekt gruppiert).
+ * @description GET /api/docker/stacks
+ *   HTTP 200: { data: DockerStack[] }
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ * @async
+ * @param {Request} _req - Express Request (keine Parameter).
+ * @param {Response} res - Express Response mit { data: DockerStack[] }.
+ * @returns {Promise<void>}
+ */
+export async function getStacks(_req: Request, res: Response): Promise<void> {
+  try {
+    const stacks = await dockerService.listStacks();
+    res.json({ data: stacks });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker Socket nicht erreichbar: ${message}` });
+  }
+}
+
+/**
+ * Startet alle gestoppten Container eines Stacks.
+ * @description POST /api/docker/stacks/:name/start
+ *   HTTP 200: Stack-Container erfolgreich gestartet.
+ *   HTTP 404: Stack nicht gefunden (kein Container mit diesem Projekt-Label).
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ * @async
+ * @param {Request} req - Express Request mit Stack-Name in req.params.name.
+ * @param {Response} res - Express Response.
+ * @returns {Promise<void>}
+ */
+export async function startStack(req: Request, res: Response): Promise<void> {
+  const { name } = req.params as { name: string };
+  try {
+    await dockerService.startStack(name);
+    res.json({ data: null, message: `Stack ${name} gestartet` });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 404) {
+      res.status(404).json({ message: `Stack ${name} nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker-Fehler: ${message}` });
+  }
+}
+
+/**
+ * Stoppt alle laufenden Container eines Stacks.
+ * @description POST /api/docker/stacks/:name/stop
+ *   HTTP 200: Stack-Container erfolgreich gestoppt.
+ *   HTTP 404: Stack nicht gefunden.
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ * @async
+ * @param {Request} req - Express Request mit Stack-Name in req.params.name.
+ * @param {Response} res - Express Response.
+ * @returns {Promise<void>}
+ */
+export async function stopStack(req: Request, res: Response): Promise<void> {
+  const { name } = req.params as { name: string };
+  try {
+    await dockerService.stopStack(name);
+    res.json({ data: null, message: `Stack ${name} gestoppt` });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 404) {
+      res.status(404).json({ message: `Stack ${name} nicht gefunden` });
       return;
     }
     const message = err instanceof Error ? err.message : 'Unbekannter Fehler';

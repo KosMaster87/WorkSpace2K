@@ -7,7 +7,7 @@
  */
 
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ContainerStats, DockerService } from '@workspace2k/shared';
+import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared';
 
 /**
  * Docker Action Group — alle Container-Management-Actions.
@@ -48,5 +48,20 @@ export const DockerActions = createActionGroup({
     'Load Container Logs': props<{ id: string; tail?: number }>(),
     'Load Container Logs Success': props<{ id: string; lines: string[] }>(),
     'Load Container Logs Failure': props<{ id: string; error: string }>(),
+
+    // ── Stacks ───────────────────────────────────────────────────────────
+    'Load Stacks': emptyProps(),
+    'Load Stacks Success': props<{ stacks: DockerStack[] }>(),
+    'Load Stacks Failure': props<{ error: string }>(),
+
+    // ── Stack starten ─────────────────────────────────────────────────────
+    'Start Stack': props<{ name: string }>(),
+    'Start Stack Success': props<{ name: string }>(),
+    'Start Stack Failure': props<{ name: string; error: string }>(),
+
+    // ── Stack stoppen ─────────────────────────────────────────────────────
+    'Stop Stack': props<{ name: string }>(),
+    'Stop Stack Success': props<{ name: string }>(),
+    'Stop Stack Failure': props<{ name: string; error: string }>(),
   },
 });

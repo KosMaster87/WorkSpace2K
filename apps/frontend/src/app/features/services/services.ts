@@ -1,9 +1,9 @@
 /**
- * @fileoverview Services Feature — Docker-Container-Verwaltung
+ * @fileoverview Services Feature — Docker-Container- und Stack-Verwaltung
  * @description Seite zur Verwaltung laufender Docker-Services.
- *   Zeigt alle Container in einer Tabelle mit Start/Stop/Delete-Buttons und Log-Panel.
- *   Dispatcht loadContainers beim Init und startContainer/stopContainer/removeContainer per Button-Klick.
- *   Buttons sind disabled während ein Pending-Request für diesen Container läuft.
+ *   Zeigt Container als flache Tabelle oder als Stack-Karten (je nach dockerView im AppStore).
+ *   Die Ansicht wird in Settings gesetzt und in localStorage persistiert.
+ *   Dispatcht loadContainers beim Init — Stacks werden automatisch danach geladen (Effect).
  * @module ServicesComponent
  */
 
@@ -14,18 +14,22 @@ import { DockerActions } from '../../store/docker/docker.actions';
 import {
   selectAllContainers,
   selectAllLogs,
+  selectAllStacks,
   selectDockerError,
   selectDockerLoading,
   selectLogsPendingIds,
   selectPendingIds,
+  selectStackPendingNames,
+  selectStacksLoading,
 } from '../../store/docker/docker.selectors';
 
 /**
- * Services-Seite — Liste und Steuerung von Docker-Containern.
- * @description Zeigt Container-Tabelle mit Status-Badges, Start/Stop/Delete-Buttons und Log-Panel.
- *   isPending(id) prüft ob ein Container gerade gestartet oder gestoppt wird.
+ * Services-Seite — Liste und Steuerung von Docker-Containern und Stacks.
+ * @description Zeigt je nach AppStore.dockerView entweder:
+ *   - 'stacks': Container gruppiert nach Compose-Projekt als aufklappbare Karten
+ *   - 'flat': Flache Tabelle aller Container mit Start/Stop/Delete/Logs
  *   Delete verwendet zweistufige Bestätigung (requestDelete → confirmDelete).
- *   Logs werden on-demand geladen und im aufklappbaren Panel darunter angezeigt.
+ *   Logs werden on-demand geladen und im aufklappbaren Panel angezeigt.
  * @class ServicesComponent
  */
 @Component({
@@ -35,12 +39,12 @@ import {
 })
 export class ServicesComponent implements OnInit {
   private readonly store = inject(Store);
-  private readonly appStore = inject(AppStore);
+  readonly appStore = inject(AppStore);
 
-  /** Signal: Liste aller Container. */
+  /** Signal: Liste aller Container (für Flat-Ansicht). */
   readonly containers = this.store.selectSignal(selectAllContainers);
 
-  /** Signal: true während die Liste initial geladen wird. */
+  /** Signal: true während die Container-Liste initial geladen wird. */
   readonly isLoading = this.store.selectSignal(selectDockerLoading);
 
   /** Signal: Fehlermeldung oder null. */
@@ -55,6 +59,15 @@ export class ServicesComponent implements OnInit {
   /** Signal: IDs mit laufenden Log-Requests. */
   readonly logsPendingIds = this.store.selectSignal(selectLogsPendingIds);
 
+  /** Signal: Liste aller Stacks (für Stack-Ansicht). */
+  readonly stacks = this.store.selectSignal(selectAllStacks);
+
+  /** Signal: true während die Stacks geladen werden. */
+  readonly stacksLoading = this.store.selectSignal(selectStacksLoading);
+
+  /** Signal: Namen von Stacks mit laufenden Start/Stop-Requests. */
+  readonly stackPendingNames = this.store.selectSignal(selectStackPendingNames);
+
   /** ID des Containers dessen Löschung bestätigt werden muss (null = kein Confirm). */
   confirmDeleteId: string | null = null;
 
@@ -62,7 +75,7 @@ export class ServicesComponent implements OnInit {
   openLogsId: string | null = null;
 
   /**
-   * Setzt den Seitentitel und lädt Container.
+   * Setzt den Seitentitel und lädt Container (Stacks folgen automatisch via Effect).
    * @returns {void}
    */
   ngOnInit(): void {
@@ -72,9 +85,8 @@ export class ServicesComponent implements OnInit {
 
   /**
    * Prüft ob für diesen Container gerade ein Start/Stop/Remove-Request läuft.
-   * @description Wird im Template genutzt um Buttons zu deaktivieren.
    * @param {string} id - Container-ID.
-   * @returns {boolean} true wenn der Container pending ist.
+   * @returns {boolean}
    */
   isPending(id: string): boolean {
     return this.pendingIds().includes(id);
@@ -83,7 +95,7 @@ export class ServicesComponent implements OnInit {
   /**
    * Gibt die geladenen Log-Zeilen für einen Container zurück.
    * @param {string} id - Container-ID.
-   * @returns {string[]} Log-Zeilen oder leeres Array wenn noch nicht geladen.
+   * @returns {string[]} Log-Zeilen oder leeres Array.
    */
   getLogs(id: string): string[] {
     return this.allLogs()[id] ?? [];
@@ -92,7 +104,7 @@ export class ServicesComponent implements OnInit {
   /**
    * Prüft ob gerade Logs für diesen Container geladen werden.
    * @param {string} id - Container-ID.
-   * @returns {boolean} true wenn ein Log-Request läuft.
+   * @returns {boolean}
    */
   isLogsLoading(id: string): boolean {
     return this.logsPendingIds().includes(id);
@@ -100,8 +112,7 @@ export class ServicesComponent implements OnInit {
 
   /**
    * Öffnet oder schließt das Log-Panel für einen Container.
-   * @description Lädt Logs beim ersten Öffnen via loadContainerLogs-Action.
-   *   Beim zweiten Klick wird das Panel geschlossen (Toggle).
+   * @description Lädt Logs beim ersten Öffnen. Beim zweiten Klick: Panel schließen.
    * @param {string} id - Container-ID.
    * @returns {void}
    */
@@ -135,7 +146,6 @@ export class ServicesComponent implements OnInit {
 
   /**
    * Bestätigt und führt das Löschen des Containers durch.
-   * @description Dispatcht removeContainer nur wenn confirmDeleteId gesetzt ist.
    * @returns {void}
    */
   confirmDelete(): void {
@@ -145,7 +155,7 @@ export class ServicesComponent implements OnInit {
   }
 
   /**
-   * Dispatcht startContainer-Action für den angegebenen Container.
+   * Dispatcht startContainer für einen einzelnen Container.
    * @param {string} id - Container-ID.
    * @returns {void}
    */
@@ -154,11 +164,38 @@ export class ServicesComponent implements OnInit {
   }
 
   /**
-   * Dispatcht stopContainer-Action für den angegebenen Container.
+   * Dispatcht stopContainer für einen einzelnen Container.
    * @param {string} id - Container-ID.
    * @returns {void}
    */
   onStop(id: string): void {
     this.store.dispatch(DockerActions.stopContainer({ id }));
+  }
+
+  /**
+   * Prüft ob für diesen Stack gerade ein Start/Stop-Request läuft.
+   * @param {string} name - Stack-Name.
+   * @returns {boolean}
+   */
+  isStackPending(name: string): boolean {
+    return this.stackPendingNames().includes(name);
+  }
+
+  /**
+   * Startet alle Container eines Stacks.
+   * @param {string} name - Stack-Name (Compose-Projekt).
+   * @returns {void}
+   */
+  onStartStack(name: string): void {
+    this.store.dispatch(DockerActions.startStack({ name }));
+  }
+
+  /**
+   * Stoppt alle Container eines Stacks.
+   * @param {string} name - Stack-Name (Compose-Projekt).
+   * @returns {void}
+   */
+  onStopStack(name: string): void {
+    this.store.dispatch(DockerActions.stopStack({ name }));
   }
 }

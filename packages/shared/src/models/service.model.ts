@@ -1,13 +1,13 @@
 /**
  * @fileoverview Service Model — Geteilte Docker-Service-Typen
- * @description Definiert DockerService, ContainerStats und ServiceStatus.
+ * @description Definiert DockerService, DockerStack, ContainerStats und ServiceStatus.
  *   Wird für Dashboard-Kacheln, Services-Page und die Stats-API genutzt.
  *   Backend füllt diese Daten via Docker Socket (/var/run/docker.sock).
  * @module ServiceModel
  */
 
 /**
- * Mögliche Status-Werte eines Docker-Containers.
+ * Mögliche Status-Werte eines Docker-Containers oder Stacks.
  */
 export type ServiceStatus = 'running' | 'stopped' | 'error' | 'unknown';
 
@@ -32,6 +32,28 @@ export interface DockerService {
   memoryUsage?: string;
   /** Optionale CPU-Auslastung in Prozent (z.B. '2.5'). */
   cpuPercent?: string;
+  /**
+   * Docker Compose Projekt-Name (aus com.docker.compose.project Label).
+   * Undefined wenn der Container nicht via Compose gestartet wurde.
+   */
+  stackName?: string;
+}
+
+/**
+ * Repräsentiert einen Docker Compose Stack (Gruppe zusammengehöriger Container).
+ * @description Ein Stack entspricht einem `docker compose`-Projekt.
+ *   Container ohne Compose-Label werden unter dem Namen '__standalone__' gruppiert.
+ *   Status: 'running' wenn alle laufen, 'stopped' wenn alle gestoppt,
+ *   'unknown' wenn gemischt (partial running).
+ * @interface DockerStack
+ */
+export interface DockerStack {
+  /** Docker Compose Projekt-Name oder '__standalone__' für einzelne Container. */
+  name: string;
+  /** Alle Container die zu diesem Stack gehören. */
+  containers: DockerService[];
+  /** Aggregierter Status über alle Container des Stacks. */
+  status: ServiceStatus;
 }
 
 /**

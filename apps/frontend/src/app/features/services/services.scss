@@ -97,6 +97,64 @@
   }
 }
 
+// ── Stacks-Ansicht ────────────────────────────────────────────────────────────
+
+.stacks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stack-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+  }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  &__name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+  }
+
+  &__meta {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+}
+
+// Kompakte Tabelle innerhalb einer Stack-Karte
+.container-table--compact {
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+}
+
 // ── Log-Panel ─────────────────────────────────────────────────────────────────
 
 .container-logs-row td {

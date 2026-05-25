@@ -37,6 +37,7 @@ export class App implements OnInit {
    */
   ngOnInit(): void {
     this.appStore.restoreTheme();
+    this.appStore.restoreDockerView();
     this.store.dispatch(AuthActions.restoreSession());
   }
 }
