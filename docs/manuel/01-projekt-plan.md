@@ -74,23 +74,34 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] `docker-compose.yml` (Frontend + Backend + PostgreSQL)
 - [x] `docker-compose.dev.yml` (nur PostgreSQL lokal, Port 5433)
 
+### Auth-Flow (vollständig)
+
+- [x] `restoreSession` in `app.ts` aktiviert
+- [x] Login-Page auf echte API verdrahtet
+- [x] Admin-User geseedet (`admin@workspace2k.dev`)
+- [x] `POST /api/auth/login` ✅ getestet
+- [x] `GET /api/auth/me` ✅ getestet
+
 ### CI/CD & Code-Qualität
 
-- [x] GitHub Actions (3 Jobs: format · frontend · backend)
+- [x] GitHub Actions — 3 getrennte Workflows (format / frontend / backend)
 - [x] Prettier — automatische Formatierung
 - [x] ESLint — Lint für Frontend und Backend
 - [x] Husky + lint-staged — Pre-commit Hook (Prettier)
+- [x] Branch Protection Rules — main gesperrt ohne grüne CI
 - [x] `packages/scss-library/` — @dev2k/scss-library im Monorepo
 
 ---
 
 ## In Arbeit 🔧
 
-### Frontend — Login verbinden
+### Backend — Docker API Integration
 
-- [ ] `restoreSession` in `app.ts` aktivieren (Backend läuft lokal)
-- [ ] Login-Page auf echte API umstellen (aktuell: Dev-Login)
-- [ ] Ersten Admin-User per Seed-Script anlegen
+- [ ] Docker Socket einbinden (`/var/run/docker.sock`)
+- [ ] `GET /api/docker/containers` — Container-Liste mit Status
+- [ ] `POST /api/docker/containers/:id/start` — Container starten
+- [ ] `POST /api/docker/containers/:id/stop` — Container stoppen
+- [ ] `dockerRouter` in `index.ts` registrieren
 
 ---
 
