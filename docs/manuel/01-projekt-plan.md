@@ -88,6 +88,9 @@ WorkSpace2K Backend (Express + TypeScript)
 
 - [x] Users-Page — Tabelle, User anlegen, Rolle ändern, User löschen (mit Bestätigung)
 - [x] Settings-Page — Theme-Toggle, Sidebar-Toggle, App-Info
+- [x] Sidebar — Menüpunkt „Docker" (Route `/services`) löst „Services" ab
+- [x] Theme Dark — weniger schwarz, tiefes Indigo-Blau
+- [x] Theme Light — Indigo-Töne, höherer Kontrast/Sättigung
 
 ### Docker
 
@@ -100,14 +103,13 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] Prettier — automatische Formatierung
 - [x] ESLint — Lint für Frontend und Backend
 - [x] Husky + lint-staged — Pre-commit Hook (Prettier)
+- [x] Husky pre-push Hook — Tests laufen automatisch vor jedem Push
 - [x] Branch Protection Rules — main gesperrt ohne grüne CI
 - [x] `packages/scss-library/` — @dev2k/scss-library im Monorepo
+- [x] Unit Tests Frontend — 13 Suites / 126 Tests (Vitest)
+- [x] Unit Tests Backend — 3 Suites / 25 Tests (Jest)
 
----
-
-## In Arbeit 🔧
-
-### Infrastructure — Dockerfiles & Deploy
+### Infrastructure — Dockerfiles
 
 - [x] Dockerfile Frontend (nginx, multi-stage build) — `apps/frontend/Dockerfile`
 - [x] Dockerfile Backend (node, multi-stage build) — `apps/backend/Dockerfile`
@@ -116,6 +118,13 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] `docker/.env.example` — Produktions-Variablen (JWT, DB, CORS)
 - [x] `.dockerignore` — node_modules, dist, .env ausschließen
 - [x] `tsc-alias` — Path-Alias-Rewriting für Backend-Build
+
+---
+
+## In Arbeit 🔧
+
+### Infrastructure — Deploy
+
 - [ ] NPM Proxy Host Konfiguration
 - [ ] Home-Server Deploy (alter PC)
 

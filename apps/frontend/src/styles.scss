@@ -20,11 +20,28 @@
   --header-height: 60px;
 }
 
+// ── Dark Theme — tiefes Indigo-Blau, weniger schwarz ───────────────────────
 [data-theme='dark'] {
-  --background-primary: #0f1117;
-  --background-secondary: #1a1d2e;
-  --background-tertiary: #252840;
-  --border-color: #2e3250;
+  --background-primary: #1c2033;
+  --background-secondary: #242840;
+  --background-tertiary: #2d3254;
+  --border-color: #3a4268;
+  --border-color-hover: #4e5882;
+  --text-primary: #e6e8f4;
+  --text-secondary: #9aa3cc;
+  --text-muted: #5c6690;
+}
+
+// ── Light Theme — Indigo-Töne, höherer Kontrast ─────────────────────────────
+[data-theme='light'] {
+  --background-primary: #f5f6ff;
+  --background-secondary: #eef0ff;
+  --background-tertiary: #e4e7ff;
+  --border-color: #c4c8e8;
+  --border-color-hover: #9aa0d0;
+  --text-primary: #1a1b3a;
+  --text-secondary: #3d4275;
+  --text-muted: #6870a8;
 }
 
 html,
