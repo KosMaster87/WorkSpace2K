@@ -246,7 +246,7 @@ export async function stopStack(req: Request, res: Response): Promise<void> {
  *   Öffnet eine SSE-Verbindung und sendet neue Log-Zeilen als data-Events.
  *   Bleibt offen solange der Container läuft (follow: true im Docker-Daemon).
  *   Schließt automatisch wenn der Container stoppt oder der Client die Verbindung trennt.
- *   Auth: Akzeptiert JWT via ?token=-Query (EventSource sendet keine Custom-Header).
+ *   Auth: Standard-Authorization-Header (Bearer Token via fetch).
  *   Format: Docker-Multiplexing wird server-seitig entpackt — Client bekommt reine Zeilen.
  * @async
  * @param {Request} req - Express Request mit Container-ID und optionalem tail-Query.
@@ -257,12 +257,12 @@ export async function streamContainerLogs(req: Request, res: Response): Promise<
   const { id } = req.params as { id: string };
   const tail = parseInt((req.query as { tail?: string }).tail ?? '100', 10);
 
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no', // Nginx-Puffer deaktivieren für sofortige Übertragung
-  });
+  // res.setHeader + flushHeaders statt writeHead — erhält CORS-Header aus cors()-Middleware
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Nginx-Puffer deaktivieren
+  res.flushHeaders();
   res.write(': connected\n\n');
 
   let logStream: NodeJS.ReadableStream | null = null;

@@ -147,11 +147,12 @@ export class ContainerService {
   /**
    * Öffnet einen SSE-Stream für Live-Logs eines Containers.
    * @description GET /api/docker/containers/:id/logs/stream
-   *   Nutzt EventSource (SSE) — der JWT-Token wird als ?token=-Query-Parameter
-   *   übermittelt, da EventSource keine Custom-Header unterstützt.
-   *   Das Observable schließt die SSE-Verbindung automatisch beim Unsubscribe
-   *   (Teardown-Funktion). Für gestoppte Container schließt der Stream nach den
-   *   Tail-Zeilen sofort (complete). Für laufende Container bleibt er offen.
+   *   Nutzt fetch() + ReadableStream statt EventSource, damit der normale
+   *   Authorization-Bearer-Header gesendet werden kann (EventSource unterstützt
+   *   keine Custom-Header). Die SSE-Zeilen werden manuell geparst.
+   *   Das Observable bricht den fetch-Request via AbortController beim Unsubscribe ab.
+   *   Für gestoppte Container schließt der Stream nach den Tail-Zeilen sofort (complete).
+   *   Für laufende Container bleibt er offen bis unsubscribe() aufgerufen wird.
    * @param {string} id - Container-ID (kurz, 12 Zeichen).
    * @param {number} [tail=100] - Anzahl der letzten Zeilen als Ausgangspunkt.
    * @returns {Observable<string>} Jede emittierte Log-Zeile als String.
@@ -159,27 +160,57 @@ export class ContainerService {
   streamContainerLogs(id: string, tail: number = 100): Observable<string> {
     return new Observable<string>((observer) => {
       const token = localStorage.getItem('ws2k_token') ?? '';
-      const url = `${this.apiUrl}/containers/${encodeURIComponent(id)}/logs/stream?tail=${tail}&token=${encodeURIComponent(token)}`;
+      const url = `${this.apiUrl}/containers/${encodeURIComponent(id)}/logs/stream?tail=${tail}`;
+      const abort = new AbortController();
 
-      const es = new EventSource(url);
+      fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: abort.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            observer.error(new Error(`Log-Stream Fehler: HTTP ${response.status}`));
+            return;
+          }
+          if (!response.body) {
+            observer.error(new Error('Kein Response-Body'));
+            return;
+          }
 
-      es.onmessage = (event) => observer.next(event.data as string);
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
 
-      // Benutzerdefiniertes Error-Event vom Backend (z.B. Container nicht gefunden)
-      es.addEventListener('error', (event) => {
-        const data = (event as MessageEvent).data as string | undefined;
-        observer.error(new Error(data ?? 'Log-Stream-Fehler'));
-        es.close();
-      });
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                observer.complete();
+                break;
+              }
+              buf += decoder.decode(value, { stream: true });
 
-      // Verbindungs-Fehler oder Server hat Verbindung geschlossen (Container gestoppt)
-      es.onerror = () => {
-        es.close(); // Verhindert automatischen Reconnect-Versuch
-        if (!observer.closed) observer.complete();
-      };
+              // SSE-Protokoll: Zeilen aufsplitten, data:-Zeilen emittieren
+              const lines = buf.split('\n');
+              buf = lines.pop() ?? '';
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  observer.next(line.slice(6));
+                }
+              }
+            }
+          } catch (err) {
+            // AbortError ist kein echter Fehler — complete statt error
+            if (!abort.signal.aborted) observer.error(err);
+            else if (!observer.closed) observer.complete();
+          }
+        })
+        .catch((err: unknown) => {
+          if (!abort.signal.aborted) observer.error(err);
+        });
 
-      // Teardown: wird bei unsubscribe() aufgerufen → schließt die SSE-Verbindung
-      return () => es.close();
+      // Teardown: AbortController bricht den laufenden fetch ab
+      return () => abort.abort();
     });
   }
 }
