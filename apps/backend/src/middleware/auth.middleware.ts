@@ -37,7 +37,8 @@ export interface AuthRequest extends Request {
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   // SSE-Fallback: ?token= Query-Parameter (EventSource sendet keine Custom-Header)
-  const queryToken = (req.query as { token?: string }).token;
+  // Optional chaining: req.query kann in Test-Mocks undefined sein
+  const queryToken = (req.query as { token?: string } | undefined)?.['token'];
 
   const token = header?.startsWith('Bearer ') ? header.split(' ')[1] : queryToken;
 
