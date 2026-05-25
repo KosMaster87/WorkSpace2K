@@ -6,10 +6,12 @@
  *   falscher Status (z.B. already running) → 409.
  *
  *   Endpunkte:
- *     GET  /api/docker/containers          → getContainers
- *     GET  /api/docker/containers/:id/stats → getContainerStats
- *     POST /api/docker/containers/:id/start → startContainer
- *     POST /api/docker/containers/:id/stop  → stopContainer
+ *     GET    /api/docker/containers              → getContainers
+ *     GET    /api/docker/containers/:id/stats    → getContainerStats
+ *     GET    /api/docker/containers/:id/logs     → getContainerLogs
+ *     POST   /api/docker/containers/:id/start    → startContainer
+ *     POST   /api/docker/containers/:id/stop     → stopContainer
+ *     DELETE /api/docker/containers/:id          → removeContainer
  * @module DockerController
  */
 
@@ -119,6 +121,66 @@ export async function stopContainer(req: Request, res: Response): Promise<void> 
       res.status(409).json({ message: 'Container ist bereits gestoppt' });
       return;
     }
+    if (status === 404) {
+      res.status(404).json({ message: `Container ${id} nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker-Fehler: ${message}` });
+  }
+}
+
+/**
+ * Löscht einen gestoppten Container.
+ * @description DELETE /api/docker/containers/:id
+ *   HTTP 204: Container erfolgreich gelöscht.
+ *   HTTP 409: Container läuft noch — erst stoppen.
+ *   HTTP 404: Container-ID nicht gefunden.
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ * @async
+ * @param {Request} req - Express Request mit Container-ID in req.params.id.
+ * @param {Response} res - Express Response.
+ * @returns {Promise<void>}
+ */
+export async function removeContainer(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  try {
+    await dockerService.removeContainer(id);
+    res.status(204).send();
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 409) {
+      res.status(409).json({ message: 'Container läuft noch — bitte zuerst stoppen.' });
+      return;
+    }
+    if (status === 404) {
+      res.status(404).json({ message: `Container ${id} nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker-Fehler: ${message}` });
+  }
+}
+
+/**
+ * Gibt die letzten Log-Zeilen eines Containers zurück.
+ * @description GET /api/docker/containers/:id/logs?tail=100
+ *   HTTP 200: { data: string[] } — Array der Log-Zeilen.
+ *   HTTP 404: Container-ID nicht gefunden.
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ * @async
+ * @param {Request} req - Express Request mit Container-ID und optionalem tail-Query.
+ * @param {Response} res - Express Response mit { data: string[] }.
+ * @returns {Promise<void>}
+ */
+export async function getContainerLogs(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  const tail = parseInt((req.query as { tail?: string }).tail ?? '100', 10);
+  try {
+    const lines = await dockerService.getContainerLogs(id, isNaN(tail) ? 100 : tail);
+    res.json({ data: lines });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
     if (status === 404) {
       res.status(404).json({ message: `Container ${id} nicht gefunden` });
       return;

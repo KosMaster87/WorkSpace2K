@@ -112,3 +112,47 @@ export const stopContainerEffect = createEffect(
     ),
   { functional: true },
 );
+
+/**
+ * Löscht einen Container und dispatcht Erfolg oder Fehler.
+ * @returns {Observable<Action>} removeContainerSuccess oder removeContainerFailure.
+ */
+export const removeContainerEffect = createEffect(
+  (actions$ = inject(Actions), containerService = inject(ContainerService)) =>
+    actions$.pipe(
+      ofType(DockerActions.removeContainer),
+      switchMap(({ id }: { id: string }) =>
+        containerService.removeContainer(id).pipe(
+          map(() => DockerActions.removeContainerSuccess({ id })),
+          catchError((err: unknown) => {
+            const error =
+              err instanceof Error ? err.message : 'Container konnte nicht gelöscht werden';
+            return of(DockerActions.removeContainerFailure({ id, error }));
+          }),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/**
+ * Lädt die Log-Zeilen eines Containers und dispatcht Erfolg oder Fehler.
+ * @returns {Observable<Action>} loadContainerLogsSuccess oder loadContainerLogsFailure.
+ */
+export const loadContainerLogsEffect = createEffect(
+  (actions$ = inject(Actions), containerService = inject(ContainerService)) =>
+    actions$.pipe(
+      ofType(DockerActions.loadContainerLogs),
+      switchMap(({ id, tail }: { id: string; tail?: number }) =>
+        containerService.getContainerLogs(id, tail).pipe(
+          map((lines: string[]) => DockerActions.loadContainerLogsSuccess({ id, lines })),
+          catchError((err: unknown) => {
+            const error =
+              err instanceof Error ? err.message : 'Logs konnten nicht geladen werden';
+            return of(DockerActions.loadContainerLogsFailure({ id, error }));
+          }),
+        ),
+      ),
+    ),
+  { functional: true },
+);

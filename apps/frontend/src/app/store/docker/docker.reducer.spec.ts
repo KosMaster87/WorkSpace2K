@@ -1,7 +1,8 @@
 /**
  * @fileoverview Docker Reducer Tests
  * @description Prüft alle State-Übergänge: loadContainers, loadContainerStats,
- *   startContainer, stopContainer — jeweils Request/Success/Failure.
+ *   startContainer, stopContainer, removeContainer, loadContainerLogs —
+ *   jeweils Request/Success/Failure.
  */
 
 import { DockerActions } from './docker.actions';
@@ -178,6 +179,103 @@ describe('dockerReducer', () => {
       );
       expect(state.pendingIds).not.toContain('c1');
       expect(state.error).toBe('Stop fehlgeschlagen');
+    });
+  });
+
+  // ── removeContainer ────────────────────────────────────────────────────────
+
+  describe('removeContainer', () => {
+    it('should add id to pendingIds', () => {
+      const state = dockerReducer(withContainers, DockerActions.removeContainer({ id: 'c2' }));
+      expect(state.pendingIds).toContain('c2');
+    });
+
+    it('should clear error on request', () => {
+      const withError = { ...withContainers, error: 'alt' };
+      const state = dockerReducer(withError, DockerActions.removeContainer({ id: 'c2' }));
+      expect(state.error).toBeNull();
+    });
+  });
+
+  describe('removeContainerSuccess', () => {
+    it('should remove id from pendingIds', () => {
+      const pending = { ...withContainers, pendingIds: ['c2'] };
+      const state = dockerReducer(pending, DockerActions.removeContainerSuccess({ id: 'c2' }));
+      expect(state.pendingIds).not.toContain('c2');
+    });
+
+    it('should remove container from list', () => {
+      const pending = { ...withContainers, pendingIds: ['c2'] };
+      const state = dockerReducer(pending, DockerActions.removeContainerSuccess({ id: 'c2' }));
+      expect(state.containers.find((c) => c.id === 'c2')).toBeUndefined();
+    });
+
+    it('should keep other containers', () => {
+      const pending = { ...withContainers, pendingIds: ['c2'] };
+      const state = dockerReducer(pending, DockerActions.removeContainerSuccess({ id: 'c2' }));
+      expect(state.containers.find((c) => c.id === 'c1')).toEqual(mockContainer);
+    });
+  });
+
+  describe('removeContainerFailure', () => {
+    it('should remove id from pendingIds and set error', () => {
+      const pending = { ...withContainers, pendingIds: ['c2'] };
+      const state = dockerReducer(
+        pending,
+        DockerActions.removeContainerFailure({ id: 'c2', error: 'Läuft noch' }),
+      );
+      expect(state.pendingIds).not.toContain('c2');
+      expect(state.error).toBe('Läuft noch');
+    });
+  });
+
+  // ── loadContainerLogs ──────────────────────────────────────────────────────
+
+  describe('loadContainerLogs', () => {
+    it('should add id to logsPendingIds', () => {
+      const state = dockerReducer(withContainers, DockerActions.loadContainerLogs({ id: 'c1' }));
+      expect(state.logsPendingIds).toContain('c1');
+    });
+  });
+
+  describe('loadContainerLogsSuccess', () => {
+    it('should remove id from logsPendingIds', () => {
+      const loading = { ...withContainers, logsPendingIds: ['c1'] };
+      const state = dockerReducer(
+        loading,
+        DockerActions.loadContainerLogsSuccess({ id: 'c1', lines: ['line 1', 'line 2'] }),
+      );
+      expect(state.logsPendingIds).not.toContain('c1');
+    });
+
+    it('should store log lines under container id', () => {
+      const loading = { ...withContainers, logsPendingIds: ['c1'] };
+      const state = dockerReducer(
+        loading,
+        DockerActions.loadContainerLogsSuccess({ id: 'c1', lines: ['line 1', 'line 2'] }),
+      );
+      expect(state.logs['c1']).toEqual(['line 1', 'line 2']);
+    });
+
+    it('should not overwrite logs of other containers', () => {
+      const withLogs = { ...withContainers, logs: { c2: ['existing'] }, logsPendingIds: ['c1'] };
+      const state = dockerReducer(
+        withLogs,
+        DockerActions.loadContainerLogsSuccess({ id: 'c1', lines: ['new'] }),
+      );
+      expect(state.logs['c2']).toEqual(['existing']);
+    });
+  });
+
+  describe('loadContainerLogsFailure', () => {
+    it('should remove id from logsPendingIds and set error', () => {
+      const loading = { ...withContainers, logsPendingIds: ['c1'] };
+      const state = dockerReducer(
+        loading,
+        DockerActions.loadContainerLogsFailure({ id: 'c1', error: 'Logs nicht abrufbar' }),
+      );
+      expect(state.logsPendingIds).not.toContain('c1');
+      expect(state.error).toBe('Logs nicht abrufbar');
     });
   });
 });

@@ -38,5 +38,15 @@ export const DockerActions = createActionGroup({
     'Stop Container': props<{ id: string }>(),
     'Stop Container Success': props<{ id: string }>(),
     'Stop Container Failure': props<{ id: string; error: string }>(),
+
+    // ── Container löschen ────────────────────────────────────────────────
+    'Remove Container': props<{ id: string }>(),
+    'Remove Container Success': props<{ id: string }>(),
+    'Remove Container Failure': props<{ id: string; error: string }>(),
+
+    // ── Container-Logs ───────────────────────────────────────────────────
+    'Load Container Logs': props<{ id: string; tail?: number }>(),
+    'Load Container Logs Success': props<{ id: string; lines: string[] }>(),
+    'Load Container Logs Failure': props<{ id: string; error: string }>(),
   },
 });

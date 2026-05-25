@@ -81,4 +81,29 @@ export class ContainerService {
   stopContainer(id: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/containers/${id}/stop`, {});
   }
+
+  /**
+   * Löscht einen gestoppten Container.
+   * @description DELETE /api/docker/containers/:id — HTTP 204 No Content.
+   * @param {string} id - Container-ID (kurz, 12 Zeichen).
+   * @returns {Observable<void>}
+   */
+  removeContainer(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/containers/${id}`);
+  }
+
+  /**
+   * Gibt die letzten Log-Zeilen eines Containers zurück.
+   * @description GET /api/docker/containers/:id/logs?tail=<tail>
+   * @param {string} id - Container-ID (kurz, 12 Zeichen).
+   * @param {number} [tail=100] - Anzahl der letzten Zeilen.
+   * @returns {Observable<string[]>} Array der Log-Zeilen.
+   */
+  getContainerLogs(id: string, tail: number = 100): Observable<string[]> {
+    return this.http
+      .get<{ data: string[] }>(`${this.apiUrl}/containers/${id}/logs`, {
+        params: { tail: tail.toString() },
+      })
+      .pipe(map((res) => res.data));
+  }
 }
