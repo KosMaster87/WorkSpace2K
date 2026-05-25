@@ -16,9 +16,15 @@ const selectDockerState = createFeatureSelector<DockerState>('docker');
 
 /**
  * Gibt die vollständige Container-Liste zurück.
- * @returns {Container[]} Alle bekannten Container.
+ * @returns {DockerService[]} Alle bekannten Container.
  */
 export const selectAllContainers = createSelector(selectDockerState, (state) => state.containers);
+
+/**
+ * Gibt den gesamten Stats-Record zurück (id → ContainerStats).
+ * @returns {Record<string, ContainerStats>}
+ */
+export const selectAllStats = createSelector(selectDockerState, (state) => state.stats);
 
 /**
  * Gibt true zurück während die Container-Liste geladen wird.

@@ -8,24 +8,9 @@
  */
 
 import Dockerode from 'dockerode';
-import { DockerService, ServiceStatus } from '@workspace2k/shared';
+import { ContainerStats, DockerService, ServiceStatus } from '@workspace2k/shared';
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
-
-/**
- * Laufzeit-Statistiken eines Containers.
- * @description Backend-spezifisch — nicht im shared Package, da nur das Backend
- *   Zugriff auf den Docker Socket hat.
- */
-export interface ContainerStats {
-  id: string;
-  name: string;
-  cpuPercent: string;
-  memoryUsage: string;
-  memoryLimit: string;
-  memoryPercent: string;
-  uptime: string;
-}
 
 /**
  * Mappt den Docker-internen State-String auf den ServiceStatus-Typ.

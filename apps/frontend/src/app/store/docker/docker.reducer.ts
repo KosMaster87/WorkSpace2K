@@ -2,9 +2,8 @@
  * @fileoverview Docker Reducer — State-Übergänge für Docker-Actions
  * @description Verarbeitet alle Docker-Actions und erzeugt den neuen State.
  *   Kein Seiteneffekt hier — nur pure Funktion (alter State + Action → neuer State).
- *   startContainer/stopContainer: id wird zu pendingIds hinzugefügt.
- *   Success: pendingIds bereinigt, Container-Status aktualisiert.
- *   Failure: pendingIds bereinigt, error gesetzt.
+ *   Stats: loadContainerStatsSuccess fügt Stats per ID in stats-Record ein.
+ *   pendingIds: beim Start/Stop-Request hinzugefügt, bei Success/Failure entfernt.
  * @module DockerReducer
  */
 
@@ -37,6 +36,15 @@ export const dockerReducer = createReducer<DockerState>(
     isLoading: false,
     error,
   })),
+
+  // ── Container-Stats ────────────────────────────────────────────────────
+  on(DockerActions.loadContainerStatsSuccess, (state, { id, stats }) => ({
+    ...state,
+    stats: { ...state.stats, [id]: stats },
+  })),
+
+  // loadContainerStats und loadContainerStatsFailure: kein State-Update nötig
+  // (Stats-Fehler werden still ignoriert — kein Error-Banner für Stats)
 
   // ── Container starten ─────────────────────────────────────────────────
   on(DockerActions.startContainer, (state, { id }) => ({

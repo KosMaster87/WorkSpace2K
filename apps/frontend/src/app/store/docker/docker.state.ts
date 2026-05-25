@@ -1,16 +1,17 @@
 /**
  * @fileoverview Docker State — NgRx Docker-Store Typen und Initialzustand
  * @description Definiert den Typ des Docker-State und den Initialzustand.
- *   DockerService und ServiceStatus werden direkt aus @workspace2k/shared importiert —
- *   möglich seit rootDir aus tsconfig.app.json entfernt wurde (TD-001 gelöst).
+ *   DockerService, ServiceStatus und ContainerStats aus @workspace2k/shared.
+ *   stats: Record<id, ContainerStats> — wird nach loadContainersSuccess befüllt,
+ *   nur für laufende Container (gestoppte liefern 0-Werte).
  *   pendingIds enthält IDs von Containern, die gerade gestartet oder gestoppt werden.
  * @module DockerState
  */
 
-import { DockerService, ServiceStatus } from '@workspace2k/shared';
+import { ContainerStats, DockerService, ServiceStatus } from '@workspace2k/shared';
 
-// Re-Export für Downstream-Importe (docker.actions, docker.effects, container.service)
-export type { DockerService, ServiceStatus };
+// Re-Export für Downstream-Importe
+export type { ContainerStats, DockerService, ServiceStatus };
 
 /**
  * Vollständiger Docker-State im NgRx Store.
@@ -19,6 +20,8 @@ export type { DockerService, ServiceStatus };
 export interface DockerState {
   /** Liste aller bekannten Container (laufend + gestoppt). */
   containers: DockerService[];
+  /** CPU, RAM, Uptime pro Container — Key: Container-ID. */
+  stats: Record<string, ContainerStats>;
   /** true während GET /api/docker/containers läuft (initiales Laden). */
   isLoading: boolean;
   /** IDs von Containern, bei denen gerade ein Start/Stop-Request läuft. */
@@ -28,10 +31,11 @@ export interface DockerState {
 }
 
 /**
- * Initialzustand des Docker-Store — keine Container, nicht ladend, kein Fehler.
+ * Initialzustand des Docker-Store.
  */
 export const initialDockerState: DockerState = {
   containers: [],
+  stats: {},
   isLoading: false,
   pendingIds: [],
   error: null,
