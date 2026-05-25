@@ -5,9 +5,10 @@
  *   Wird in index.ts unter /api/docker eingehängt.
  *
  *   Endpunkte:
- *     GET  /api/docker/containers          → Container-Liste
- *     POST /api/docker/containers/:id/start → Container starten
- *     POST /api/docker/containers/:id/stop  → Container stoppen
+ *     GET  /api/docker/containers            → Container-Liste
+ *     GET  /api/docker/containers/:id/stats  → CPU, RAM, Uptime eines Containers
+ *     POST /api/docker/containers/:id/start  → Container starten
+ *     POST /api/docker/containers/:id/stop   → Container stoppen
  * @module DockerRoutes
  */
 
@@ -25,6 +26,12 @@ dockerRouter.use(authMiddleware);
  * Gibt alle Container zurück (laufend + gestoppt).
  */
 dockerRouter.get('/containers', dockerController.getContainers);
+
+/**
+ * GET /api/docker/containers/:id/stats
+ * Gibt CPU-, RAM- und Uptime-Statistiken eines Containers zurück.
+ */
+dockerRouter.get('/containers/:id/stats', dockerController.getContainerStats);
 
 /**
  * POST /api/docker/containers/:id/start

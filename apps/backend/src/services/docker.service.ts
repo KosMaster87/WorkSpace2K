@@ -9,6 +9,8 @@
 
 import Dockerode from 'dockerode';
 
+const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
+
 /**
  * Mögliche Status-Werte eines Docker-Containers.
  * @description Spiegelt ServiceStatus aus @workspace2k/shared — bewusst lokal
@@ -27,7 +29,18 @@ export interface DockerContainerInfo {
   port?: number;
 }
 
-const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
+/**
+ * Laufzeit-Statistiken eines Containers.
+ */
+export interface ContainerStats {
+  id: string;
+  name: string;
+  cpuPercent: string;
+  memoryUsage: string;
+  memoryLimit: string;
+  memoryPercent: string;
+  uptime: string;
+}
 
 /**
  * Mappt den Docker-internen State-String auf den ServiceStatus-Typ.
@@ -51,13 +64,67 @@ function mapStatus(state: string): ServiceStatus {
 }
 
 /**
+ * Berechnet CPU-Auslastung in Prozent aus Docker-Stats-Rohdaten.
+ * @description Formel: (cpu_delta / system_delta) * online_cpus * 100
+ *   Gibt '0.00' zurück wenn system_delta = 0 (erster Messwert).
+ * @param {Dockerode.ContainerStats} stats - Rohe Docker-Stats.
+ * @returns {string} CPU-Prozent mit 2 Dezimalstellen (z.B. '2.45').
+ * @private
+ */
+function calcCpuPercent(stats: Dockerode.ContainerStats): string {
+  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+  const systemDelta =
+    (stats.cpu_stats.system_cpu_usage ?? 0) - (stats.precpu_stats.system_cpu_usage ?? 0);
+  const numCpus = stats.cpu_stats.online_cpus ?? 1;
+
+  if (systemDelta <= 0 || cpuDelta <= 0) return '0.00';
+  return ((cpuDelta / systemDelta) * numCpus * 100).toFixed(2);
+}
+
+/**
+ * Formatiert Bytes in lesbare Einheit (MB oder GB).
+ * @param {number} bytes - Anzahl Bytes.
+ * @returns {string} Formatierter String, z.B. '128 MB' oder '1.5 GB'.
+ * @private
+ */
+function formatBytes(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return `${mb.toFixed(0)} MB`;
+}
+
+/**
+ * Berechnet lesbare Uptime aus einem ISO-Start-Datum.
+ * @description Gibt Zeit in der Form "3h 12m" oder "2d 5h" zurück.
+ * @param {string} startedAt - ISO-8601-Timestamp (z.B. "2026-05-25T08:00:00Z").
+ * @returns {string} Lesbare Uptime oder 'gestoppt' wenn Datum in der Zukunft.
+ * @private
+ */
+function calcUptime(startedAt: string): string {
+  const started = new Date(startedAt).getTime();
+  const now = Date.now();
+  const diffMs = now - started;
+
+  if (diffMs < 0) return 'gestoppt';
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  return `${minutes}m`;
+}
+
+/**
  * Gibt alle Docker-Container zurück (laufende und gestoppte).
  * @description Ruft `docker ps -a` äquivalent ab.
  *   Container-Namen: Docker liefert Namen mit führendem "/", dieser wird entfernt.
  *   Port: Erster öffentlicher Port aus der Ports-Liste, falls vorhanden.
  * @async
  * @function listContainers
- * @returns {Promise<DockerService[]>} Liste aller Container im DockerService-Format.
+ * @returns {Promise<DockerContainerInfo[]>} Liste aller Container im DockerContainerInfo-Format.
  * @throws {Error} Wenn der Docker Socket nicht erreichbar ist.
  */
 export async function listContainers(): Promise<DockerContainerInfo[]> {
@@ -70,6 +137,48 @@ export async function listContainers(): Promise<DockerContainerInfo[]> {
     status: mapStatus(c.State),
     port: c.Ports.find((p) => p.PublicPort !== undefined)?.PublicPort,
   }));
+}
+
+/**
+ * Gibt CPU-, RAM- und Uptime-Statistiken für einen einzelnen Container zurück.
+ * @description Ruft parallel docker.stats() (Snapshot) und container.inspect()
+ *   (für StartedAt) ab. Nur für laufende Container sinnvoll — gestoppte Container
+ *   liefern Stats mit 0-Werten.
+ *   Memory: usage minus cache (Linux-spezifisch, inactive_file als Fallback).
+ * @async
+ * @function getContainerStats
+ * @param {string} id - Container-ID (kurz oder vollständig).
+ * @returns {Promise<ContainerStats>} CPU, RAM, Uptime als formatierte Strings.
+ * @throws {Error} Wenn Container nicht existiert oder Docker Socket nicht erreichbar ist.
+ */
+export async function getContainerStats(id: string): Promise<ContainerStats> {
+  const container = docker.getContainer(id);
+
+  const [stats, info] = await Promise.all([
+    container.stats({ stream: false }) as Promise<Dockerode.ContainerStats>,
+    container.inspect(),
+  ]);
+
+  const cpuPercent = calcCpuPercent(stats);
+
+  // Linux: tatsächlich genutzter Speicher = usage - (cache/inactive_file)
+  const cache =
+    (stats.memory_stats.stats as Record<string, number> | undefined)?.['cache'] ??
+    (stats.memory_stats.stats as Record<string, number> | undefined)?.['inactive_file'] ??
+    0;
+  const usedBytes = (stats.memory_stats.usage ?? 0) - cache;
+  const limitBytes = stats.memory_stats.limit ?? 1;
+  const memPercent = ((usedBytes / limitBytes) * 100).toFixed(1);
+
+  return {
+    id: id.slice(0, 12),
+    name: (info.Name ?? id).replace(/^\//, ''),
+    cpuPercent,
+    memoryUsage: formatBytes(usedBytes),
+    memoryLimit: formatBytes(limitBytes),
+    memoryPercent: memPercent,
+    uptime: info.State.Running ? calcUptime(info.State.StartedAt) : 'gestoppt',
+  };
 }
 
 /**
