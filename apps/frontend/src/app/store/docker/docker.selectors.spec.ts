@@ -2,14 +2,16 @@
  * @fileoverview Docker Selectors Tests
  * @description Prüft alle Selektoren: selectAllContainers, selectAllStats,
  *   selectDockerLoading, selectDockerError, selectPendingIds,
- *   selectRunningCount, selectStoppedCount.
+ *   selectRunningCount, selectStoppedCount, selectAllLogs, selectLogsPendingIds.
  */
 
 import {
   selectAllContainers,
+  selectAllLogs,
   selectAllStats,
   selectDockerError,
   selectDockerLoading,
+  selectLogsPendingIds,
   selectPendingIds,
   selectRunningCount,
   selectStoppedCount,
@@ -39,8 +41,10 @@ const buildState = (partial: Partial<DockerState>): { docker: DockerState } => (
   docker: {
     containers: [],
     stats: {},
+    logs: {},
     isLoading: false,
     pendingIds: [],
+    logsPendingIds: [],
     error: null,
     ...partial,
   },
@@ -118,6 +122,45 @@ describe('Docker Selectors', () => {
 
     it('should count only stopped containers', () => {
       expect(selectStoppedCount(buildState({ containers: [running, stopped, running2] }))).toBe(1);
+    });
+  });
+
+  // ── selectAllLogs ──────────────────────────────────────────────────────────
+
+  describe('selectAllLogs', () => {
+    it('should return empty record on initial state', () => {
+      expect(selectAllLogs(buildState({}))).toEqual({});
+    });
+
+    it('should return logs record', () => {
+      const logs = { c1: ['line 1', 'line 2'] };
+      expect(selectAllLogs(buildState({ logs }))).toEqual(logs);
+    });
+
+    it('should return logs for multiple containers independently', () => {
+      const logs = { c1: ['a'], c2: ['b', 'c'] };
+      const result = selectAllLogs(buildState({ logs }));
+      expect(result['c1']).toEqual(['a']);
+      expect(result['c2']).toEqual(['b', 'c']);
+    });
+  });
+
+  // ── selectLogsPendingIds ───────────────────────────────────────────────────
+
+  describe('selectLogsPendingIds', () => {
+    it('should return empty array on initial state', () => {
+      expect(selectLogsPendingIds(buildState({}))).toEqual([]);
+    });
+
+    it('should return logsPendingIds', () => {
+      expect(selectLogsPendingIds(buildState({ logsPendingIds: ['c1'] }))).toEqual(['c1']);
+    });
+
+    it('should return all pending log ids', () => {
+      expect(selectLogsPendingIds(buildState({ logsPendingIds: ['c1', 'c3'] }))).toEqual([
+        'c1',
+        'c3',
+      ]);
     });
   });
 });

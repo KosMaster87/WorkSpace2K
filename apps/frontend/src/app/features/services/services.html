@@ -62,8 +62,64 @@
                       }
                     </button>
                   }
+
+                  <button
+                    class="btn btn--logs"
+                    [class.btn--logs-active]="openLogsId === container.id"
+                    [disabled]="isLogsLoading(container.id)"
+                    (click)="toggleLogs(container.id)"
+                    title="Logs anzeigen"
+                  >
+                    @if (isLogsLoading(container.id)) {
+                      <span class="btn__spinner"></span>
+                    } @else {
+                      📋
+                    }
+                  </button>
+
+                  @if (container.status === 'stopped') {
+                    @if (confirmDeleteId === container.id) {
+                      <span class="delete-confirm">
+                        <span class="delete-confirm__label">Löschen?</span>
+                        <button class="btn btn--danger" (click)="confirmDelete()">Ja</button>
+                        <button class="btn btn--cancel" (click)="cancelDelete()">Nein</button>
+                      </span>
+                    } @else {
+                      <button
+                        class="btn btn--delete"
+                        [disabled]="isPending(container.id)"
+                        (click)="requestDelete(container.id)"
+                        title="Container löschen"
+                      >
+                        🗑️
+                      </button>
+                    }
+                  }
                 </td>
               </tr>
+
+              @if (openLogsId === container.id) {
+                <tr class="container-logs-row">
+                  <td colspan="5">
+                    <div class="log-panel">
+                      <div class="log-panel__header">
+                        <span class="log-panel__title">Logs — {{ container.name }}</span>
+                        <button class="log-panel__close" (click)="toggleLogs(container.id)">✕</button>
+                      </div>
+                      @if (isLogsLoading(container.id)) {
+                        <div class="log-panel__loading">
+                          <span class="btn__spinner"></span>
+                          <span>Logs werden geladen…</span>
+                        </div>
+                      } @else if (getLogs(container.id).length === 0) {
+                        <div class="log-panel__empty">Keine Log-Einträge gefunden.</div>
+                      } @else {
+                        <pre class="log-output">{{ getLogs(container.id).join('\n') }}</pre>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>

@@ -180,3 +180,65 @@ export async function stopContainer(id: string): Promise<void> {
   const container = docker.getContainer(id);
   await container.stop();
 }
+
+/**
+ * Löscht einen Container (muss gestoppt sein).
+ * @description Äquivalent zu `docker rm <id>`.
+ *   Wirft einen Fehler wenn Container nicht gefunden oder noch läuft.
+ * @async
+ * @function removeContainer
+ * @param {string} id - Container-ID (kurz oder vollständig).
+ * @returns {Promise<void>}
+ * @throws {Error} Wenn der Container nicht gelöscht werden kann.
+ */
+export async function removeContainer(id: string): Promise<void> {
+  const container = docker.getContainer(id);
+  await container.remove();
+}
+
+/**
+ * Parst den Docker-Multiplexing-Log-Buffer in einzelne Zeilen.
+ * @description Docker multiplext stdout/stderr mit einem 8-Byte-Header pro Zeile:
+ *   Byte 0: Stream-Typ (1=stdout, 2=stderr), Bytes 4–7: Länge des folgenden Blocks.
+ * @param {Buffer} buffer - Roher Log-Buffer von container.logs().
+ * @returns {string[]} Array der Log-Zeilen ohne Header-Bytes.
+ * @private
+ */
+function demuxLogs(buffer: Buffer): string[] {
+  const lines: string[] = [];
+  let offset = 0;
+
+  while (offset + 8 <= buffer.length) {
+    const size = buffer.readUInt32BE(offset + 4);
+    offset += 8;
+    if (size === 0 || offset + size > buffer.length) break;
+    const line = buffer.slice(offset, offset + size).toString('utf-8').trimEnd();
+    if (line) lines.push(line);
+    offset += size;
+  }
+
+  return lines;
+}
+
+/**
+ * Gibt die letzten Log-Zeilen eines Containers zurück.
+ * @description Äquivalent zu `docker logs --tail <tail> <id>`.
+ *   Parst den Docker-Multiplexing-Buffer (8-Byte-Header pro Zeile).
+ * @async
+ * @function getContainerLogs
+ * @param {string} id - Container-ID (kurz oder vollständig).
+ * @param {number} [tail=100] - Anzahl der letzten Zeilen (Standard: 100).
+ * @returns {Promise<string[]>} Array der Log-Zeilen.
+ * @throws {Error} Wenn Container nicht gefunden oder Docker Socket nicht erreichbar.
+ */
+export async function getContainerLogs(id: string, tail: number = 100): Promise<string[]> {
+  const container = docker.getContainer(id);
+  const buffer = (await container.logs({
+    stdout: true,
+    stderr: true,
+    tail,
+    follow: false,
+  })) as Buffer;
+
+  return demuxLogs(buffer);
+}

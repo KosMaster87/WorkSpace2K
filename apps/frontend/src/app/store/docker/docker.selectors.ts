@@ -61,3 +61,18 @@ export const selectStoppedCount = createSelector(
   selectAllContainers,
   (containers) => containers.filter((c) => c.status === 'stopped').length,
 );
+
+/**
+ * Gibt den gesamten Logs-Record zurück (id → string[]).
+ * @returns {Record<string, string[]>}
+ */
+export const selectAllLogs = createSelector(selectDockerState, (state) => state.logs);
+
+/**
+ * Gibt die IDs der Container zurück, bei denen gerade Logs geladen werden.
+ * @returns {string[]}
+ */
+export const selectLogsPendingIds = createSelector(
+  selectDockerState,
+  (state) => state.logsPendingIds,
+);

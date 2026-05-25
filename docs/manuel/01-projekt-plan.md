@@ -88,9 +88,11 @@ WorkSpace2K Backend (Express + TypeScript)
 
 - [x] Users-Page — Tabelle, User anlegen, Rolle ändern, User löschen (mit Bestätigung)
 - [x] Settings-Page — Theme-Toggle, Sidebar-Toggle, App-Info
-- [x] Sidebar — Menüpunkt „Docker" (Route `/services`) löst „Services" ab
+- [x] Sidebar — Menüpunkt „Docker" (Route `/docker`) löst „Services" ab
 - [x] Theme Dark — weniger schwarz, tiefes Indigo-Blau
 - [x] Theme Light — Indigo-Töne, höherer Kontrast/Sättigung
+- [x] Destinations-Page — Kachel-Grid, Kategorien, Admin-CRUD
+- [x] Docker Phase 1 — Container löschen + Logs anzeigen (tail 100)
 
 ### Docker
 
@@ -122,6 +124,18 @@ WorkSpace2K Backend (Express + TypeScript)
 ---
 
 ## In Arbeit 🔧
+
+### Docker — Roadmap (Phasen 2–4)
+
+- [ ] **Phase 2** — Stack-Awareness: Container nach `com.docker.compose.project`-Label gruppieren
+- [ ] **Phase 2** — Stack-Übersicht statt flacher Container-Liste
+- [ ] **Phase 2** — Stack stoppen/starten (alle Container des Stacks)
+- [ ] **Phase 3** — Filesystem-Scan für `/opt/stacks/`
+- [ ] **Phase 3** — Compose-File-Editor (Stack deployen/bearbeiten)
+- [ ] **Phase 3** — Stack updaten (pull + redeploy)
+- [ ] **Phase 3** — Live-Logs via WebSocket/SSE
+- [ ] **Phase 4** — Multi-Host Docker-Management (remote via Agent)
+- [ ] **Phase 4** — Template-System (häufige Services per Klick deployen)
 
 ### Infrastructure — Deploy
 

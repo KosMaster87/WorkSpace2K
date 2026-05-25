@@ -85,4 +85,41 @@ export const dockerReducer = createReducer<DockerState>(
     pendingIds: state.pendingIds.filter((pid) => pid !== id),
     error,
   })),
+
+  // ── Container löschen ─────────────────────────────────────────────────
+  on(DockerActions.removeContainer, (state, { id }) => ({
+    ...state,
+    pendingIds: [...state.pendingIds, id],
+    error: null,
+  })),
+
+  on(DockerActions.removeContainerSuccess, (state, { id }) => ({
+    ...state,
+    pendingIds: state.pendingIds.filter((pid) => pid !== id),
+    containers: state.containers.filter((c) => c.id !== id),
+  })),
+
+  on(DockerActions.removeContainerFailure, (state, { id, error }) => ({
+    ...state,
+    pendingIds: state.pendingIds.filter((pid) => pid !== id),
+    error,
+  })),
+
+  // ── Container-Logs ────────────────────────────────────────────────────
+  on(DockerActions.loadContainerLogs, (state, { id }) => ({
+    ...state,
+    logsPendingIds: [...state.logsPendingIds, id],
+  })),
+
+  on(DockerActions.loadContainerLogsSuccess, (state, { id, lines }) => ({
+    ...state,
+    logsPendingIds: state.logsPendingIds.filter((pid) => pid !== id),
+    logs: { ...state.logs, [id]: lines },
+  })),
+
+  on(DockerActions.loadContainerLogsFailure, (state, { id, error }) => ({
+    ...state,
+    logsPendingIds: state.logsPendingIds.filter((pid) => pid !== id),
+    error,
+  })),
 );

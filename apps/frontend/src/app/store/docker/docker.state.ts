@@ -22,10 +22,14 @@ export interface DockerState {
   containers: DockerService[];
   /** CPU, RAM, Uptime pro Container — Key: Container-ID. */
   stats: Record<string, ContainerStats>;
+  /** Log-Zeilen pro Container — Key: Container-ID. */
+  logs: Record<string, string[]>;
   /** true während GET /api/docker/containers läuft (initiales Laden). */
   isLoading: boolean;
-  /** IDs von Containern, bei denen gerade ein Start/Stop-Request läuft. */
+  /** IDs von Containern, bei denen gerade ein Start/Stop/Delete-Request läuft. */
   pendingIds: string[];
+  /** IDs von Containern, bei denen gerade Logs geladen werden. */
+  logsPendingIds: string[];
   /** Fehlermeldung vom letzten fehlgeschlagenen Request oder null. */
   error: string | null;
 }
@@ -36,7 +40,9 @@ export interface DockerState {
 export const initialDockerState: DockerState = {
   containers: [],
   stats: {},
+  logs: {},
   isLoading: false,
   pendingIds: [],
+  logsPendingIds: [],
   error: null,
 };
