@@ -108,10 +108,11 @@ Das Entfernen von `rootDir` ändert die Verzeichnisstruktur des `outDir`-Outputs
 
 ## TD-002 — Backend: `DockerContainerInfo` lokal statt aus `@workspace2k/shared`
 
-**Status:** offen  
+**Status:** ✅ erledigt  
 **Priorität:** mittel  
 **Bereich:** Backend / tsconfig  
 **Entdeckt:** 2026-05-25  
+**Gelöst:** 2026-05-25 — rootDir auf '../..' gesetzt, main/start-Pfade in package.json angepasst, DockerContainerInfo + ServiceStatus durch Shared-Imports ersetzt  
 **Verwandt:** TD-001
 
 ### Problem
