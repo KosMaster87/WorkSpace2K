@@ -1,0 +1,9 @@
+echo "🧪 Tests vor dem Push..."
+
+echo "\n▶ Frontend Tests (Vitest)..."
+npm test --prefix apps/frontend || { echo "❌ Frontend Tests fehlgeschlagen — Push abgebrochen."; exit 1; }
+
+echo "\n▶ Backend Tests (Jest)..."
+npm test --prefix apps/backend || { echo "❌ Backend Tests fehlgeschlagen — Push abgebrochen."; exit 1; }
+
+echo "\n✅ Alle Tests bestanden — Push wird fortgesetzt."
