@@ -1,6 +1,7 @@
 /**
  * @fileoverview guestGuard Tests
  * @description Prüft: nicht-eingeloggte User durchgelassen, eingeloggte zu /dashboard umgeleitet.
+ *   Guard wartet auf selectAuthResolved = true bevor er entscheidet (Session Restore).
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -13,7 +14,7 @@ import {
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { guestGuard } from './guest.guard';
-import { selectIsAuthenticated } from '../../store/auth/auth.selectors';
+import { selectAuthResolved, selectIsAuthenticated } from '../../store/auth/auth.selectors';
 
 const mockRoute = {} as ActivatedRouteSnapshot;
 const mockState = {} as RouterStateSnapshot;
@@ -28,7 +29,8 @@ describe('guestGuard', () => {
     store = TestBed.inject(MockStore);
   });
 
-  it('should return true when not authenticated (guest)', async () => {
+  it('should return true when resolved and not authenticated (guest)', async () => {
+    store.overrideSelector(selectAuthResolved, true);
     store.overrideSelector(selectIsAuthenticated, false);
     store.refreshState();
 
@@ -39,7 +41,8 @@ describe('guestGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('should redirect to /dashboard when already authenticated', async () => {
+  it('should redirect to /dashboard when resolved and already authenticated', async () => {
+    store.overrideSelector(selectAuthResolved, true);
     store.overrideSelector(selectIsAuthenticated, true);
     store.refreshState();
 
