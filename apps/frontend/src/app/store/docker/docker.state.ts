@@ -8,10 +8,10 @@
  * @module DockerState
  */
 
-import { ContainerStats, DockerService, ServiceStatus } from '@workspace2k/shared';
+import { ContainerStats, DockerService, DockerStack, ServiceStatus } from '@workspace2k/shared';
 
 // Re-Export für Downstream-Importe
-export type { ContainerStats, DockerService, ServiceStatus };
+export type { ContainerStats, DockerService, DockerStack, ServiceStatus };
 
 /**
  * Vollständiger Docker-State im NgRx Store.
@@ -32,6 +32,12 @@ export interface DockerState {
   logsPendingIds: string[];
   /** Fehlermeldung vom letzten fehlgeschlagenen Request oder null. */
   error: string | null;
+  /** Container nach Compose-Projekt gruppiert. */
+  stacks: DockerStack[];
+  /** true während GET /api/docker/stacks läuft. */
+  stacksLoading: boolean;
+  /** Namen von Stacks, bei denen gerade ein Start/Stop-Request läuft. */
+  stackPendingNames: string[];
 }
 
 /**
@@ -45,4 +51,7 @@ export const initialDockerState: DockerState = {
   pendingIds: [],
   logsPendingIds: [],
   error: null,
+  stacks: [],
+  stacksLoading: false,
+  stackPendingNames: [],
 };

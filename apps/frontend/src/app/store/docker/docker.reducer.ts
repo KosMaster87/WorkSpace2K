@@ -122,4 +122,74 @@ export const dockerReducer = createReducer<DockerState>(
     logsPendingIds: state.logsPendingIds.filter((pid) => pid !== id),
     error,
   })),
+
+  // ── Stacks laden ──────────────────────────────────────────────────────
+  on(DockerActions.loadStacks, (state) => ({
+    ...state,
+    stacksLoading: true,
+  })),
+
+  on(DockerActions.loadStacksSuccess, (state, { stacks }) => ({
+    ...state,
+    stacks,
+    stacksLoading: false,
+  })),
+
+  on(DockerActions.loadStacksFailure, (state, { error }) => ({
+    ...state,
+    stacksLoading: false,
+    error,
+  })),
+
+  // ── Stack starten ─────────────────────────────────────────────────────
+  on(DockerActions.startStack, (state, { name }) => ({
+    ...state,
+    stackPendingNames: [...state.stackPendingNames, name],
+  })),
+
+  on(DockerActions.startStackSuccess, (state, { name }) => ({
+    ...state,
+    stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
+    stacks: state.stacks.map((s) =>
+      s.name === name
+        ? {
+            ...s,
+            status: 'running' as const,
+            containers: s.containers.map((c) => ({ ...c, status: 'running' as const })),
+          }
+        : s,
+    ),
+  })),
+
+  on(DockerActions.startStackFailure, (state, { name, error }) => ({
+    ...state,
+    stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
+    error,
+  })),
+
+  // ── Stack stoppen ─────────────────────────────────────────────────────
+  on(DockerActions.stopStack, (state, { name }) => ({
+    ...state,
+    stackPendingNames: [...state.stackPendingNames, name],
+  })),
+
+  on(DockerActions.stopStackSuccess, (state, { name }) => ({
+    ...state,
+    stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
+    stacks: state.stacks.map((s) =>
+      s.name === name
+        ? {
+            ...s,
+            status: 'stopped' as const,
+            containers: s.containers.map((c) => ({ ...c, status: 'stopped' as const })),
+          }
+        : s,
+    ),
+  })),
+
+  on(DockerActions.stopStackFailure, (state, { name, error }) => ({
+    ...state,
+    stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
+    error,
+  })),
 );

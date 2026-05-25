@@ -44,6 +44,38 @@
       </div>
     </section>
 
+    <!-- Docker-Ansicht -->
+    <section class="settings-section">
+      <h3 class="settings-section__title">Docker-Ansicht</h3>
+
+      <div class="setting-row">
+        <div class="setting-row__info">
+          <span class="setting-row__label">Ansichtsmodus</span>
+          <span class="setting-row__description">
+            Stacks-Ansicht gruppiert Container nach Compose-Projekt. Flat-Ansicht zeigt alle Container in einer Tabelle.
+          </span>
+        </div>
+        <div class="view-toggle">
+          <button
+            class="view-toggle__btn"
+            [class.view-toggle__btn--active]="appStore.dockerView() === 'stacks'"
+            (click)="appStore.setDockerView('stacks')"
+          >
+            <span>🗂️</span>
+            <span>Stacks</span>
+          </button>
+          <button
+            class="view-toggle__btn"
+            [class.view-toggle__btn--active]="appStore.dockerView() === 'flat'"
+            (click)="appStore.setDockerView('flat')"
+          >
+            <span>☰</span>
+            <span>Flat</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- App-Info -->
     <section class="settings-section">
       <h3 class="settings-section__title">App-Info</h3>

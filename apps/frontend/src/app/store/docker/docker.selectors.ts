@@ -76,3 +76,27 @@ export const selectLogsPendingIds = createSelector(
   selectDockerState,
   (state) => state.logsPendingIds,
 );
+
+/**
+ * Gibt alle Stacks zurück (Container nach Compose-Projekt gruppiert).
+ * @returns {DockerStack[]}
+ */
+export const selectAllStacks = createSelector(selectDockerState, (state) => state.stacks);
+
+/**
+ * Gibt true zurück während die Stacks geladen werden.
+ * @returns {boolean}
+ */
+export const selectStacksLoading = createSelector(
+  selectDockerState,
+  (state) => state.stacksLoading,
+);
+
+/**
+ * Gibt die Namen der Stacks zurück, bei denen gerade ein Start/Stop-Request läuft.
+ * @returns {string[]}
+ */
+export const selectStackPendingNames = createSelector(
+  selectDockerState,
+  (state) => state.stackPendingNames,
+);

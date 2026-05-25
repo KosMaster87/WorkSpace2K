@@ -11,6 +11,9 @@
  *     POST   /api/docker/containers/:id/start    → Container starten
  *     POST   /api/docker/containers/:id/stop     → Container stoppen
  *     DELETE /api/docker/containers/:id          → Container löschen (muss gestoppt sein)
+ *     GET    /api/docker/stacks                  → Container nach Compose-Projekt gruppiert
+ *     POST   /api/docker/stacks/:name/start      → Alle Container eines Stacks starten
+ *     POST   /api/docker/stacks/:name/stop       → Alle Container eines Stacks stoppen
  * @module DockerRoutes
  */
 
@@ -58,3 +61,21 @@ dockerRouter.delete('/containers/:id', dockerController.removeContainer);
  * Gibt die letzten Log-Zeilen eines Containers zurück (Query: ?tail=100).
  */
 dockerRouter.get('/containers/:id/logs', dockerController.getContainerLogs);
+
+/**
+ * GET /api/docker/stacks
+ * Gibt alle Container gruppiert nach Docker Compose Projekt zurück.
+ */
+dockerRouter.get('/stacks', dockerController.getStacks);
+
+/**
+ * POST /api/docker/stacks/:name/start
+ * Startet alle gestoppten Container des angegebenen Stacks.
+ */
+dockerRouter.post('/stacks/:name/start', dockerController.startStack);
+
+/**
+ * POST /api/docker/stacks/:name/stop
+ * Stoppt alle laufenden Container des angegebenen Stacks.
+ */
+dockerRouter.post('/stacks/:name/stop', dockerController.stopStack);

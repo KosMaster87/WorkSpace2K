@@ -7,7 +7,13 @@
 
 import { DockerActions } from './docker.actions';
 import { dockerReducer } from './docker.reducer';
-import { ContainerStats, DockerService, DockerState, initialDockerState } from './docker.state';
+import {
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  DockerState,
+  initialDockerState,
+} from './docker.state';
 
 const mockContainer: DockerService = {
   id: 'c1',
@@ -276,6 +282,156 @@ describe('dockerReducer', () => {
       );
       expect(state.logsPendingIds).not.toContain('c1');
       expect(state.error).toBe('Logs nicht abrufbar');
+    });
+  });
+
+  // ── loadStacks ─────────────────────────────────────────────────────────────
+
+  const mockStack: DockerStack = {
+    name: 'vaultwarden',
+    containers: [mockContainer, mockStopped],
+    status: 'unknown',
+  };
+
+  describe('loadStacks', () => {
+    it('should set stacksLoading to true', () => {
+      const state = dockerReducer(initialDockerState, DockerActions.loadStacks());
+      expect(state.stacksLoading).toBe(true);
+    });
+  });
+
+  describe('loadStacksSuccess', () => {
+    it('should set stacks and clear stacksLoading', () => {
+      const state = dockerReducer(
+        { ...initialDockerState, stacksLoading: true },
+        DockerActions.loadStacksSuccess({ stacks: [mockStack] }),
+      );
+      expect(state.stacks).toEqual([mockStack]);
+      expect(state.stacksLoading).toBe(false);
+    });
+  });
+
+  describe('loadStacksFailure', () => {
+    it('should clear stacksLoading and set error', () => {
+      const state = dockerReducer(
+        { ...initialDockerState, stacksLoading: true },
+        DockerActions.loadStacksFailure({ error: 'Socket Fehler' }),
+      );
+      expect(state.stacksLoading).toBe(false);
+      expect(state.error).toBe('Socket Fehler');
+    });
+  });
+
+  // ── startStack ─────────────────────────────────────────────────────────────
+
+  describe('startStack', () => {
+    it('should add name to stackPendingNames', () => {
+      const state = dockerReducer(
+        { ...initialDockerState, stacks: [mockStack] },
+        DockerActions.startStack({ name: 'vaultwarden' }),
+      );
+      expect(state.stackPendingNames).toContain('vaultwarden');
+    });
+  });
+
+  describe('startStackSuccess', () => {
+    it('should remove name from stackPendingNames', () => {
+      const pending = {
+        ...initialDockerState,
+        stacks: [mockStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(
+        pending,
+        DockerActions.startStackSuccess({ name: 'vaultwarden' }),
+      );
+      expect(state.stackPendingNames).not.toContain('vaultwarden');
+    });
+
+    it('should update stack and containers status to running', () => {
+      const pending = {
+        ...initialDockerState,
+        stacks: [mockStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(
+        pending,
+        DockerActions.startStackSuccess({ name: 'vaultwarden' }),
+      );
+      const stack = state.stacks.find((s) => s.name === 'vaultwarden');
+      expect(stack?.status).toBe('running');
+      stack?.containers.forEach((c) => expect(c.status).toBe('running'));
+    });
+  });
+
+  describe('startStackFailure', () => {
+    it('should remove name from stackPendingNames and set error', () => {
+      const pending = {
+        ...initialDockerState,
+        stacks: [mockStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(
+        pending,
+        DockerActions.startStackFailure({ name: 'vaultwarden', error: 'Start fehlgeschlagen' }),
+      );
+      expect(state.stackPendingNames).not.toContain('vaultwarden');
+      expect(state.error).toBe('Start fehlgeschlagen');
+    });
+  });
+
+  // ── stopStack ──────────────────────────────────────────────────────────────
+
+  describe('stopStack', () => {
+    it('should add name to stackPendingNames', () => {
+      const runningStack: DockerStack = { ...mockStack, status: 'running' };
+      const state = dockerReducer(
+        { ...initialDockerState, stacks: [runningStack] },
+        DockerActions.stopStack({ name: 'vaultwarden' }),
+      );
+      expect(state.stackPendingNames).toContain('vaultwarden');
+    });
+  });
+
+  describe('stopStackSuccess', () => {
+    it('should remove name from stackPendingNames', () => {
+      const runningStack: DockerStack = { ...mockStack, status: 'running' };
+      const pending = {
+        ...initialDockerState,
+        stacks: [runningStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(pending, DockerActions.stopStackSuccess({ name: 'vaultwarden' }));
+      expect(state.stackPendingNames).not.toContain('vaultwarden');
+    });
+
+    it('should update stack and containers status to stopped', () => {
+      const runningStack: DockerStack = { ...mockStack, status: 'running' };
+      const pending = {
+        ...initialDockerState,
+        stacks: [runningStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(pending, DockerActions.stopStackSuccess({ name: 'vaultwarden' }));
+      const stack = state.stacks.find((s) => s.name === 'vaultwarden');
+      expect(stack?.status).toBe('stopped');
+      stack?.containers.forEach((c) => expect(c.status).toBe('stopped'));
+    });
+  });
+
+  describe('stopStackFailure', () => {
+    it('should remove name from stackPendingNames and set error', () => {
+      const pending = {
+        ...initialDockerState,
+        stacks: [mockStack],
+        stackPendingNames: ['vaultwarden'],
+      };
+      const state = dockerReducer(
+        pending,
+        DockerActions.stopStackFailure({ name: 'vaultwarden', error: 'Stop fehlgeschlagen' }),
+      );
+      expect(state.stackPendingNames).not.toContain('vaultwarden');
+      expect(state.error).toBe('Stop fehlgeschlagen');
     });
   });
 });

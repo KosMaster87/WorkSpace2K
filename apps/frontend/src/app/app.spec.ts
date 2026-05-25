@@ -12,22 +12,28 @@ import { AuthActions } from './store/auth/auth.actions';
 
 interface MockAppStore {
   restoreTheme: ReturnType<typeof vi.fn>;
+  restoreDockerView: ReturnType<typeof vi.fn>;
   sidebarCollapsed: ReturnType<typeof vi.fn>;
   theme: ReturnType<typeof vi.fn>;
   pageTitle: ReturnType<typeof vi.fn>;
+  dockerView: ReturnType<typeof vi.fn>;
   toggleTheme: ReturnType<typeof vi.fn>;
   toggleSidebar: ReturnType<typeof vi.fn>;
   setPageTitle: ReturnType<typeof vi.fn>;
+  setDockerView: ReturnType<typeof vi.fn>;
 }
 
 const mockAppStore: MockAppStore = {
   restoreTheme: vi.fn(),
+  restoreDockerView: vi.fn(),
   sidebarCollapsed: vi.fn(() => false),
   theme: vi.fn(() => 'dark' as const),
   pageTitle: vi.fn(() => ''),
+  dockerView: vi.fn(() => 'stacks' as const),
   toggleTheme: vi.fn(),
   toggleSidebar: vi.fn(),
   setPageTitle: vi.fn(),
+  setDockerView: vi.fn(),
 };
 
 describe('App', () => {
