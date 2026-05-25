@@ -1,8 +1,196 @@
 .dashboard {
   padding: var(--space-4);
 
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+
   &__subtitle {
     color: var(--text-secondary);
     margin-top: var(--space-2);
+  }
+
+  &__stats {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-4);
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--text-secondary);
+    padding: var(--space-6) 0;
+  }
+
+  &__error {
+    background: color-mix(in srgb, var(--error-color) 15%, transparent);
+    border: 1px solid var(--error-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--error-color);
+    margin-bottom: var(--space-4);
+  }
+
+  &__empty {
+    color: var(--text-muted);
+    padding: var(--space-6) 0;
+    text-align: center;
+  }
+}
+
+// ── Service-Kachel ────────────────────────────────────────────────────────────
+
+.service-tile {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: var(--transition-base);
+
+  &:hover {
+    border-color: var(--primary-color);
+  }
+
+  &--running {
+    border-left: 3px solid #22c55e;
+  }
+
+  &--stopped {
+    border-left: 3px solid var(--text-muted);
+  }
+
+  &--error {
+    border-left: 3px solid var(--error-color);
+  }
+
+  &--unknown {
+    border-left: 3px solid #f59e0b;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  &__name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__image {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  &__port {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin: var(--space-1) 0 0;
+  }
+}
+
+// ── Status-Badge ──────────────────────────────────────────────────────────────
+
+.status-badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  &--running {
+    background: color-mix(in srgb, #22c55e 20%, transparent);
+    color: #22c55e;
+  }
+
+  &--stopped {
+    background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+    color: var(--text-muted);
+  }
+
+  &--error {
+    background: color-mix(in srgb, var(--error-color) 20%, transparent);
+    color: var(--error-color);
+  }
+
+  &--unknown {
+    background: color-mix(in srgb, #f59e0b 20%, transparent);
+    color: #f59e0b;
+  }
+}
+
+// ── Stat-Badge (Header-Zusammenfassung) ───────────────────────────────────────
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  &--running {
+    color: #22c55e;
+
+    .stat-badge__dot {
+      background: #22c55e;
+    }
+  }
+
+  &--stopped {
+    color: var(--text-muted);
+
+    .stat-badge__dot {
+      background: var(--text-muted);
+    }
+  }
+}
+
+// ── Loading-Spinner ───────────────────────────────────────────────────────────
+
+.loading-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

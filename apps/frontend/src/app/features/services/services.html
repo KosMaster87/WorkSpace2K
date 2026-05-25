@@ -1,3 +1,73 @@
 <div class="services">
-  <h2>Services</h2>
+  <header class="services__header">
+    <h2>Services</h2>
+    <p class="services__subtitle">Docker-Container verwalten</p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="services__loading">
+      <span class="loading-spinner"></span>
+      <span>Container werden geladen…</span>
+    </div>
+  }
+
+  @if (error() && !isLoading()) {
+    <div class="services__error"><strong>Fehler:</strong> {{ error() }}</div>
+  }
+
+  @if (!isLoading()) {
+    @if (containers().length === 0) {
+      <div class="services__empty">Keine Container gefunden.</div>
+    } @else {
+      <div class="services__table-wrapper">
+        <table class="container-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Image</th>
+              <th>Status</th>
+              <th>Port</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (container of containers(); track container.id) {
+              <tr class="container-table__row container-table__row--{{ container.status }}">
+                <td class="container-table__name">{{ container.name }}</td>
+                <td class="container-table__image">{{ container.image }}</td>
+                <td>
+                  <span class="status-badge status-badge--{{ container.status }}">
+                    {{ container.status }}
+                  </span>
+                </td>
+                <td class="container-table__port">
+                  {{ container.port ?? '—' }}
+                </td>
+                <td class="container-table__actions">
+                  @if (container.status !== 'running') {
+                    <button class="btn btn--start" [disabled]="isPending(container.id)" (click)="onStart(container.id)">
+                      @if (isPending(container.id)) {
+                        <span class="btn__spinner"></span>
+                      } @else {
+                        ▶ Start
+                      }
+                    </button>
+                  }
+                  @if (container.status === 'running') {
+                    <button class="btn btn--stop" [disabled]="isPending(container.id)" (click)="onStop(container.id)">
+                      @if (isPending(container.id)) {
+                        <span class="btn__spinner"></span>
+                      } @else {
+                        ■ Stop
+                      }
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
 </div>

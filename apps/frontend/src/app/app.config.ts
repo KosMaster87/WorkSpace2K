@@ -16,14 +16,16 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import * as AuthEffects from './store/auth/auth.effects';
 import { authReducer } from './store/auth/auth.reducer';
+import * as DockerEffects from './store/docker/docker.effects';
+import { dockerReducer } from './store/docker/docker.reducer';
 
 /**
  * Globale Angular ApplicationConfig.
  * @description Alle Provider auf App-Ebene:
  *   - Router mit Input Binding und View Transitions
  *   - HttpClient mit authInterceptor (hängt JWT automatisch an)
- *   - NgRx Store mit auth-Reducer
- *   - NgRx Effects für asynchrone Auth-Logik
+ *   - NgRx Store mit auth- und docker-Reducer
+ *   - NgRx Effects für asynchrone Auth- und Docker-Logik
  *   - NgRx DevTools nur im Development-Mode
  */
 export const appConfig: ApplicationConfig = {
@@ -31,8 +33,8 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideStore({ auth: authReducer }),
-    provideEffects(AuthEffects),
+    provideStore({ auth: authReducer, docker: dockerReducer }),
+    provideEffects(AuthEffects, DockerEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
   ],
 };

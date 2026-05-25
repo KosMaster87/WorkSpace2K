@@ -1,4 +1,52 @@
 <div class="dashboard">
-  <h2>Dashboard</h2>
-  <p class="dashboard__subtitle">WorkSpace2K — Services Overview</p>
+  <header class="dashboard__header">
+    <div>
+      <h2>Dashboard</h2>
+      <p class="dashboard__subtitle">WorkSpace2K — Services Overview</p>
+    </div>
+    <div class="dashboard__stats">
+      <span class="stat-badge stat-badge--running">
+        <span class="stat-badge__dot"></span>
+        {{ runningCount() }} Running
+      </span>
+      <span class="stat-badge stat-badge--stopped">
+        <span class="stat-badge__dot"></span>
+        {{ stoppedCount() }} Stopped
+      </span>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="dashboard__loading">
+      <span class="loading-spinner"></span>
+      <span>Container werden geladen…</span>
+    </div>
+  }
+
+  @if (error() && !isLoading()) {
+    <div class="dashboard__error"><strong>Fehler:</strong> {{ error() }}</div>
+  }
+
+  @if (!isLoading() && !error()) {
+    @if (containers().length === 0) {
+      <div class="dashboard__empty">Keine Container gefunden.</div>
+    } @else {
+      <div class="dashboard__grid">
+        @for (container of containers(); track container.id) {
+          <div class="service-tile service-tile--{{ container.status }}">
+            <div class="service-tile__header">
+              <span class="service-tile__name">{{ container.name }}</span>
+              <span class="status-badge status-badge--{{ container.status }}">
+                {{ container.status }}
+              </span>
+            </div>
+            <p class="service-tile__image">{{ container.image }}</p>
+            @if (container.port) {
+              <p class="service-tile__port">Port {{ container.port }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
 </div>

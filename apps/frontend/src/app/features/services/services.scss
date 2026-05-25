@@ -1,3 +1,184 @@
 .services {
   padding: var(--space-4);
+
+  &__header {
+    margin-bottom: var(--space-6);
+  }
+
+  &__subtitle {
+    color: var(--text-secondary);
+    margin-top: var(--space-2);
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--text-secondary);
+    padding: var(--space-6) 0;
+  }
+
+  &__error {
+    background: color-mix(in srgb, var(--error-color) 15%, transparent);
+    border: 1px solid var(--error-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--error-color);
+    margin-bottom: var(--space-4);
+  }
+
+  &__empty {
+    color: var(--text-muted);
+    padding: var(--space-6) 0;
+    text-align: center;
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+  }
+}
+
+// ── Tabelle ───────────────────────────────────────────────────────────────────
+
+.container-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    background: var(--background-tertiary);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  &__row {
+    transition: var(--transition-fast);
+
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--background-secondary);
+    }
+  }
+
+  &__name {
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__image {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+
+  &__port {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+
+  &__actions {
+    white-space: nowrap;
+  }
+}
+
+// ── Status-Badge ──────────────────────────────────────────────────────────────
+
+.status-badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &--running {
+    background: color-mix(in srgb, #22c55e 20%, transparent);
+    color: #22c55e;
+  }
+
+  &--stopped {
+    background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+    color: var(--text-muted);
+  }
+
+  &--error {
+    background: color-mix(in srgb, var(--error-color) 20%, transparent);
+    color: var(--error-color);
+  }
+
+  &--unknown {
+    background: color-mix(in srgb, #f59e0b 20%, transparent);
+    color: #f59e0b;
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-width: 72px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--start {
+    background: color-mix(in srgb, #22c55e 20%, transparent);
+    color: #22c55e;
+    border-color: color-mix(in srgb, #22c55e 40%, transparent);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, #22c55e 30%, transparent);
+    }
+  }
+
+  &--stop {
+    background: color-mix(in srgb, var(--error-color) 15%, transparent);
+    color: var(--error-color);
+    border-color: color-mix(in srgb, var(--error-color) 30%, transparent);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--error-color) 25%, transparent);
+    }
+  }
+
+  &__spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
