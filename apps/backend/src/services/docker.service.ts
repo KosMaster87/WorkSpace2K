@@ -212,7 +212,10 @@ function demuxLogs(buffer: Buffer): string[] {
     const size = buffer.readUInt32BE(offset + 4);
     offset += 8;
     if (size === 0 || offset + size > buffer.length) break;
-    const line = buffer.slice(offset, offset + size).toString('utf-8').trimEnd();
+    const line = buffer
+      .slice(offset, offset + size)
+      .toString('utf-8')
+      .trimEnd();
     if (line) lines.push(line);
     offset += size;
   }
