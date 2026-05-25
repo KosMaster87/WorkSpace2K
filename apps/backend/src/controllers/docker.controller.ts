@@ -4,6 +4,12 @@
  *   Delegiert die eigentliche Logik an docker.service.ts.
  *   Fehlerbehandlung: Socket-Fehler → 503, Container nicht gefunden → 404,
  *   falscher Status (z.B. already running) → 409.
+ *
+ *   Endpunkte:
+ *     GET  /api/docker/containers          → getContainers
+ *     GET  /api/docker/containers/:id/stats → getContainerStats
+ *     POST /api/docker/containers/:id/start → startContainer
+ *     POST /api/docker/containers/:id/stop  → stopContainer
  * @module DockerController
  */
 
@@ -26,6 +32,35 @@ export async function getContainers(_req: Request, res: Response): Promise<void>
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
     res.status(503).json({ message: `Docker Socket nicht erreichbar: ${message}` });
+  }
+}
+
+/**
+ * Gibt CPU-, RAM- und Uptime-Statistiken für einen einzelnen Container zurück.
+ * @description GET /api/docker/containers/:id/stats
+ *   HTTP 200: Stats erfolgreich abgerufen.
+ *   HTTP 404: Container-ID nicht gefunden.
+ *   HTTP 503: Docker Socket nicht erreichbar.
+ *   Nur für laufende Container sinnvoll — gestoppte Container liefern Stats
+ *   mit 0-Werten und Uptime = 'gestoppt'.
+ * @async
+ * @param {Request} req - Express Request mit Container-ID in req.params.id.
+ * @param {Response} res - Express Response mit { data: ContainerStats }.
+ * @returns {Promise<void>}
+ */
+export async function getContainerStats(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  try {
+    const stats = await dockerService.getContainerStats(id);
+    res.json({ data: stats });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 404) {
+      res.status(404).json({ message: `Container ${id} nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    res.status(503).json({ message: `Docker-Fehler: ${message}` });
   }
 }
 
