@@ -1,0 +1,45 @@
+name: Frontend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/**'
+      - 'packages/shared/**'
+      - 'packages/scss-library/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/frontend/**'
+      - 'packages/shared/**'
+      - 'packages/scss-library/**'
+
+jobs:
+  frontend:
+    name: Angular — Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: apps/frontend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: apps/frontend
+
+      - name: Build
+        run: npm run build:prod
+        working-directory: apps/frontend
