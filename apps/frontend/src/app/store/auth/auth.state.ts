@@ -4,6 +4,10 @@
  *   User und UserRole werden aus @workspace2k/shared importiert und re-exportiert —
  *   möglich seit rootDir aus tsconfig.app.json entfernt wurde (TD-001 gelöst).
  *   auth.actions.ts und auth.effects.ts importieren User weiterhin von hier.
+ *
+ *   isResolved: false beim App-Start — wird auf true gesetzt sobald restoreSession
+ *   abgeschlossen ist (Erfolg oder Fehler). Guards warten auf isResolved = true,
+ *   damit die Routing-Entscheidung nicht vor dem Session Restore getroffen wird.
  * @module AuthState
  */
 
@@ -25,14 +29,21 @@ export interface AuthState {
   isLoading: boolean;
   /** Fehlermeldung vom letzten fehlgeschlagenen Login oder null. */
   error: string | null;
+  /**
+   * true sobald der initiale Session-Restore-Versuch abgeschlossen ist.
+   * Guards warten auf diesen Flag bevor sie die Auth-Entscheidung treffen —
+   * verhindert Logout-Flash beim Seiten-Refresh.
+   */
+  isResolved: boolean;
 }
 
 /**
- * Initialzustand des Auth-Store — nicht authentifiziert, kein Fehler.
+ * Initialzustand des Auth-Store — nicht authentifiziert, Session noch nicht geprüft.
  */
 export const initialAuthState: AuthState = {
   user: null,
   token: null,
   isLoading: false,
   error: null,
+  isResolved: false,
 };

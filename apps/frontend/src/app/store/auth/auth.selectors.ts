@@ -36,6 +36,15 @@ export const selectToken = createSelector(selectAuthState, (s: AuthState) => s.t
 export const selectIsAuthenticated = createSelector(selectAuthState, (s: AuthState) => !!s.token);
 
 /**
+ * Selektiert ob der initiale Session-Restore abgeschlossen ist.
+ * @description Guards filtern auf diesen Wert (filter(resolved => resolved)) bevor sie
+ *   die Routing-Entscheidung treffen — verhindert Logout-Flash beim Seiten-Refresh.
+ *   Wird true nach restoreSessionSuccess, restoreSessionFailure, loginSuccess oder logout.
+ * @returns {boolean} true sobald der erste Auth-Resolve-Zyklus abgeschlossen ist.
+ */
+export const selectAuthResolved = createSelector(selectAuthState, (s: AuthState) => s.isResolved);
+
+/**
  * Selektiert ob der User die ADMIN-Rolle hat.
  * @description Wird vom adminGuard genutzt. Backend gibt role lowercase zurück ('admin').
  * @returns {boolean} true wenn user.role === 'admin'.

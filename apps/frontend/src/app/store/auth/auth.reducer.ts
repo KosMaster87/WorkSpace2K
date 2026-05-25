@@ -2,7 +2,8 @@
  * @fileoverview Auth Reducer — Zustandsübergänge für den Auth-Store
  * @description Pure Funktion die den Auth-State basierend auf dispatched Actions aktualisiert.
  *   Behandelt Login-Zyklus (start → success/failure) und Session Restore.
- *   Logout setzt den State vollständig auf initialAuthState zurück.
+ *   Logout setzt den State vollständig auf initialAuthState zurück — isResolved bleibt true,
+ *   damit Guards nach einem Logout nicht erneut auf Session Restore warten.
  * @module AuthReducer
  */
 
@@ -14,11 +15,11 @@ import { AuthState, initialAuthState, User } from './auth.state';
  * Auth-Reducer — verarbeitet alle Auth-Actions und gibt neuen State zurück.
  * @description Zustandsübergänge:
  *   - login → isLoading: true, error: null
- *   - loginSuccess → user + token gesetzt, isLoading: false
+ *   - loginSuccess → user + token gesetzt, isLoading: false, isResolved: true
  *   - loginFailure → error gesetzt, isLoading: false
- *   - logout → State komplett zurückgesetzt (initialAuthState)
- *   - restoreSessionSuccess → user + token gesetzt (kein isLoading — läuft im Hintergrund)
- *   - restoreSessionFailure → State komplett zurückgesetzt (initialAuthState)
+ *   - logout → State auf initialAuthState + isResolved: true (Guards nicht blockieren)
+ *   - restoreSessionSuccess → user + token gesetzt, isResolved: true
+ *   - restoreSessionFailure → State auf initialAuthState + isResolved: true
  */
 export const authReducer = createReducer(
   initialAuthState,
@@ -37,6 +38,7 @@ export const authReducer = createReducer(
       token,
       isLoading: false,
       error: null,
+      isResolved: true,
     }),
   ),
 
@@ -46,7 +48,9 @@ export const authReducer = createReducer(
     error,
   })),
 
-  on(AuthActions.logout, () => initialAuthState),
+  // Logout: alles zurücksetzen, aber isResolved auf true lassen —
+  // sonst würden Guards nach dem Logout auf einen neuen Session Restore warten.
+  on(AuthActions.logout, () => ({ ...initialAuthState, isResolved: true })),
 
   on(
     AuthActions.restoreSessionSuccess,
@@ -54,8 +58,11 @@ export const authReducer = createReducer(
       ...state,
       user,
       token,
+      isResolved: true,
     }),
   ),
 
-  on(AuthActions.restoreSessionFailure, () => initialAuthState),
+  // restoreSessionFailure: Auth-State leeren, aber isResolved auf true setzen —
+  // Guards sehen: Session Restore ist fertig, kein Token → Weiterleitung zu /login.
+  on(AuthActions.restoreSessionFailure, () => ({ ...initialAuthState, isResolved: true })),
 );
