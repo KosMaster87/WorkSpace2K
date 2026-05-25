@@ -10,7 +10,7 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
-import { Container } from './docker.state';
+import { DockerService } from '@workspace2k/shared';
 import { DockerActions } from './docker.actions';
 
 /**
@@ -25,7 +25,7 @@ export const loadContainersEffect = createEffect(
       ofType(DockerActions.loadContainers),
       switchMap(() =>
         containerService.getContainers().pipe(
-          map((containers: Container[]) => DockerActions.loadContainersSuccess({ containers })),
+          map((containers: DockerService[]) => DockerActions.loadContainersSuccess({ containers })),
           catchError((err: unknown) => {
             const error =
               err instanceof Error ? err.message : 'Container konnten nicht geladen werden';

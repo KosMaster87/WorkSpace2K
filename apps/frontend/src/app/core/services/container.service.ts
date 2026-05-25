@@ -10,14 +10,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { Container } from '../../store/docker/docker.state';
+import { DockerService } from '@workspace2k/shared';
 
 /**
  * Rohes API-Antwortformat für die Container-Liste.
  * @private
  */
 interface ApiContainersResponse {
-  data: Container[];
+  data: DockerService[];
 }
 
 /**
@@ -34,9 +34,9 @@ export class ContainerService {
   /**
    * Lädt alle Docker-Container (laufend + gestoppt).
    * @description GET /api/docker/containers — entpackt data-Array.
-   * @returns {Observable<Container[]>} Liste aller Container.
+   * @returns {Observable<DockerService[]>} Liste aller Container.
    */
-  getContainers(): Observable<Container[]> {
+  getContainers(): Observable<DockerService[]> {
     return this.http
       .get<ApiContainersResponse>(`${this.apiUrl}/containers`)
       .pipe(map((res) => res.data));

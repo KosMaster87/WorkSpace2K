@@ -6,10 +6,11 @@ Technische Schulden und bekannte Architektur-Lücken im WorkSpace2K-Monorepo.
 
 ## TD-001 — `@workspace2k/shared` nicht in Frontend-Build importierbar
 
-**Status:** offen  
+**Status:** ✅ erledigt  
 **Priorität:** mittel  
 **Bereich:** Frontend / tsconfig  
 **Entdeckt:** 2026-05-25  
+**Gelöst:** 2026-05-25 — `rootDir` aus `tsconfig.app.json` entfernt, alle lokalen Typ-Kopien durch Shared-Imports ersetzt  
 
 ### Problem
 
