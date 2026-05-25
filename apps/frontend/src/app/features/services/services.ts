@@ -4,20 +4,23 @@
  *   Zeigt Container als flache Tabelle oder als Stack-Karten (je nach dockerView im AppStore).
  *   Die Ansicht wird in Settings gesetzt und in localStorage persistiert.
  *   Dispatcht loadContainers beim Init — Stacks werden automatisch danach geladen (Effect).
+ *   Live-Logs: SSE-Stream via ContainerService.streamContainerLogs() — kein NgRx Store,
+ *   da Streaming-Daten lokal in Signals gehalten werden.
  * @module ServicesComponent
  */
 
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
+import { ContainerService } from '../../core/services/container.service';
 import { AppStore } from '../../store/app/app.store';
 import { DockerActions } from '../../store/docker/docker.actions';
 import {
   selectAllContainers,
-  selectAllLogs,
   selectAllStacks,
   selectDockerError,
   selectDockerLoading,
-  selectLogsPendingIds,
   selectPendingIds,
   selectStackPendingNames,
   selectStacksLoading,
@@ -29,7 +32,8 @@ import {
  *   - 'stacks': Container gruppiert nach Compose-Projekt als aufklappbare Karten
  *   - 'flat': Flache Tabelle aller Container mit Start/Stop/Delete/Logs
  *   Delete verwendet zweistufige Bestätigung (requestDelete → confirmDelete).
- *   Logs werden on-demand geladen und im aufklappbaren Panel angezeigt.
+ *   Logs werden per SSE-Stream in Echtzeit angezeigt (liveLines Signal).
+ *   Der Stream wird beim Öffnen gestartet und beim Schließen automatisch beendet.
  * @class ServicesComponent
  */
 @Component({
@@ -39,6 +43,8 @@ import {
 })
 export class ServicesComponent implements OnInit {
   private readonly store = inject(Store);
+  private readonly containerService = inject(ContainerService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly appStore = inject(AppStore);
 
   /** Signal: Liste aller Container (für Flat-Ansicht). */
@@ -53,12 +59,6 @@ export class ServicesComponent implements OnInit {
   /** Signal: IDs mit laufenden Start/Stop/Remove-Requests. */
   readonly pendingIds = this.store.selectSignal(selectPendingIds);
 
-  /** Signal: Record id → string[] mit geladenen Log-Zeilen. */
-  readonly allLogs = this.store.selectSignal(selectAllLogs);
-
-  /** Signal: IDs mit laufenden Log-Requests. */
-  readonly logsPendingIds = this.store.selectSignal(selectLogsPendingIds);
-
   /** Signal: Liste aller Stacks (für Stack-Ansicht). */
   readonly stacks = this.store.selectSignal(selectAllStacks);
 
@@ -67,6 +67,21 @@ export class ServicesComponent implements OnInit {
 
   /** Signal: Namen von Stacks mit laufenden Start/Stop-Requests. */
   readonly stackPendingNames = this.store.selectSignal(selectStackPendingNames);
+
+  /**
+   * Live-Log-Zeilen pro Container-ID.
+   * @description Wird vom SSE-Stream befüllt. Max. 500 Zeilen pro Container.
+   */
+  readonly liveLines = signal<Record<string, string[]>>({});
+
+  /**
+   * IDs von Containern mit offener SSE-Verbindung.
+   * @description Wird für den "● LIVE"-Indikator im Log-Panel genutzt.
+   */
+  readonly streamingIds = signal<string[]>([]);
+
+  /** Aktive SSE-Subscriptions — Key: Container-ID. */
+  private readonly liveStreams = new Map<string, Subscription>();
 
   /** ID des Containers dessen Löschung bestätigt werden muss (null = kein Confirm). */
   confirmDeleteId: string | null = null;
@@ -93,38 +108,98 @@ export class ServicesComponent implements OnInit {
   }
 
   /**
-   * Gibt die geladenen Log-Zeilen für einen Container zurück.
+   * Gibt die Live-Log-Zeilen für einen Container zurück.
    * @param {string} id - Container-ID.
-   * @returns {string[]} Log-Zeilen oder leeres Array.
+   * @returns {string[]} Log-Zeilen vom SSE-Stream oder leeres Array.
    */
   getLogs(id: string): string[] {
-    return this.allLogs()[id] ?? [];
+    return this.liveLines()[id] ?? [];
   }
 
   /**
-   * Prüft ob gerade Logs für diesen Container geladen werden.
+   * Prüft ob für diesen Container gerade ein SSE-Stream offen ist.
    * @param {string} id - Container-ID.
    * @returns {boolean}
    */
-  isLogsLoading(id: string): boolean {
-    return this.logsPendingIds().includes(id);
+  isStreaming(id: string): boolean {
+    return this.streamingIds().includes(id);
   }
 
   /**
    * Öffnet oder schließt das Log-Panel für einen Container.
-   * @description Lädt Logs beim ersten Öffnen. Beim zweiten Klick: Panel schließen.
+   * @description Startet einen SSE-Stream beim Öffnen, beendet ihn beim Schließen.
+   *   Zweiter Klick auf den gleichen Container schließt das Panel.
    * @param {string} id - Container-ID.
    * @returns {void}
    */
   toggleLogs(id: string): void {
     if (this.openLogsId === id) {
-      this.openLogsId = null;
+      this.closeLogs(id);
       return;
     }
     this.openLogsId = id;
-    if (!this.allLogs()[id]) {
-      this.store.dispatch(DockerActions.loadContainerLogs({ id }));
+    this.startStream(id);
+  }
+
+  /**
+   * Startet den SSE-Log-Stream für einen Container.
+   * @description Zeilen werden in liveLines Signal akkumuliert (max. 500 Zeilen).
+   *   Stream bleibt offen bis closeLogs() aufgerufen wird oder der Container stoppt.
+   * @private
+   * @param {string} id - Container-ID.
+   * @returns {void}
+   */
+  private startStream(id: string): void {
+    if (this.liveStreams.has(id)) return;
+
+    this.liveLines.update((rec) => ({ ...rec, [id]: [] }));
+    this.streamingIds.update((ids) => [...ids, id]);
+
+    const sub = this.containerService
+      .streamContainerLogs(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (line: string) => {
+          this.liveLines.update((rec) => {
+            const prev = rec[id] ?? [];
+            // Max. 500 Zeilen im Speicher halten
+            const next = prev.length >= 500 ? prev.slice(1) : prev;
+            return { ...rec, [id]: [...next, line] };
+          });
+        },
+        error: () => {
+          this.streamingIds.update((ids) => ids.filter((s) => s !== id));
+          this.liveStreams.delete(id);
+        },
+        complete: () => {
+          // Stream vom Server geschlossen (z.B. Container gestoppt)
+          this.streamingIds.update((ids) => ids.filter((s) => s !== id));
+          this.liveStreams.delete(id);
+        },
+      });
+
+    this.liveStreams.set(id, sub);
+  }
+
+  /**
+   * Schließt das Log-Panel und beendet den SSE-Stream.
+   * @private
+   * @param {string} id - Container-ID.
+   * @returns {void}
+   */
+  private closeLogs(id: string): void {
+    this.openLogsId = null;
+    const sub = this.liveStreams.get(id);
+    if (sub) {
+      sub.unsubscribe();
+      this.liveStreams.delete(id);
     }
+    this.streamingIds.update((ids) => ids.filter((s) => s !== id));
+    this.liveLines.update((rec) => {
+      const next = { ...rec };
+      delete next[id];
+      return next;
+    });
   }
 
   /**

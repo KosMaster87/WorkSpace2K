@@ -93,6 +93,10 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] Theme Light — Indigo-Töne, höherer Kontrast/Sättigung
 - [x] Destinations-Page — Kachel-Grid, Kategorien, Admin-CRUD
 - [x] Docker Phase 1 — Container löschen + Logs anzeigen (tail 100)
+- [x] Docker Phase 2 — Stack-Awareness (Container nach Compose-Projekt gruppiert)
+- [x] Docker Phase 2 — Stacks-Ansicht + Flat-Ansicht (View-Toggle in Settings)
+- [x] Docker Phase 2 — Stack starten / stoppen
+- [x] Settings — Docker-Ansicht-Präferenz in localStorage gespeichert (`ws2k_docker_view`)
 
 ### Docker
 
@@ -125,11 +129,8 @@ WorkSpace2K Backend (Express + TypeScript)
 
 ## In Arbeit 🔧
 
-### Docker — Roadmap (Phasen 2–4)
+### Docker — Roadmap (Phasen 3–4)
 
-- [ ] **Phase 2** — Stack-Awareness: Container nach `com.docker.compose.project`-Label gruppieren
-- [ ] **Phase 2** — Stack-Übersicht statt flacher Container-Liste
-- [ ] **Phase 2** — Stack stoppen/starten (alle Container des Stacks)
 - [ ] **Phase 3** — Filesystem-Scan für `/opt/stacks/`
 - [ ] **Phase 3** — Compose-File-Editor (Stack deployen/bearbeiten)
 - [ ] **Phase 3** — Stack updaten (pull + redeploy)

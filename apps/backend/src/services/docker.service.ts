@@ -279,6 +279,33 @@ export async function removeContainer(id: string): Promise<void> {
 }
 
 /**
+ * Öffnet einen Log-Follow-Stream eines Containers.
+ * @description Äquivalent zu `docker logs --follow --tail <tail> <id>`.
+ *   Gibt einen Node.js ReadableStream im Docker-Multiplexing-Format zurück
+ *   (8-Byte-Header pro Frame: 1 Byte Typ, 3 Bytes reserviert, 4 Bytes Länge).
+ *   Bleibt offen solange der Container läuft. Für gestoppte Container schließt
+ *   der Stream nach Ausgabe der Tail-Zeilen sofort.
+ * @async
+ * @function streamContainerLogs
+ * @param {string} id - Container-ID (kurz oder vollständig).
+ * @param {number} [tail=100] - Anzahl der letzten Zeilen als Ausgangspunkt.
+ * @returns {Promise<NodeJS.ReadableStream>} Multiplexed Docker-Log-Stream.
+ * @throws {Error} Wenn Container nicht existiert oder Docker Socket nicht erreichbar ist.
+ */
+export async function streamContainerLogs(
+  id: string,
+  tail: number = 100,
+): Promise<NodeJS.ReadableStream> {
+  const container = docker.getContainer(id);
+  return container.logs({
+    stdout: true,
+    stderr: true,
+    tail,
+    follow: true,
+  }) as Promise<NodeJS.ReadableStream>;
+}
+
+/**
  * Parst den Docker-Multiplexing-Log-Buffer in einzelne Zeilen.
  * @description Docker multiplext stdout/stderr mit einem 8-Byte-Header pro Zeile:
  *   Byte 0: Stream-Typ (1=stdout, 2=stderr), Bytes 4–7: Länge des folgenden Blocks.

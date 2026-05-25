@@ -174,10 +174,24 @@
     border-bottom: 1px solid var(--border-color);
   }
 
+  &__title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
   &__title {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
+  }
+
+  &__live {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: #22c55e;
+    letter-spacing: 0.04em;
+    animation: live-pulse 2s ease-in-out infinite;
   }
 
   &__close {
@@ -372,5 +386,15 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
   }
 }
