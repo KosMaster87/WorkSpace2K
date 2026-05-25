@@ -72,8 +72,7 @@ function mapStatus(state: string): ServiceStatus {
  * @private
  */
 function calcCpuPercent(stats: Dockerode.ContainerStats): string {
-  const cpuDelta =
-    stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
   const systemDelta =
     (stats.cpu_stats.system_cpu_usage ?? 0) - (stats.precpu_stats.system_cpu_usage ?? 0);
   const numCpus = stats.cpu_stats.online_cpus ?? 1;
