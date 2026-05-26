@@ -32,8 +32,10 @@ WORKDIR /app
 
 # OpenSSL 3.x für Prisma Query Engine (linux-musl-openssl-3.0.x)
 # node:24-alpine basiert auf Alpine 3.20+ mit OpenSSL 3.x — explizit installieren
-# damit libssl.so.3 für den Prisma-Binary verfügbar ist
-RUN apk add --no-cache openssl
+# damit libssl.so.3 für den Prisma-Binary verfügbar ist.
+# docker-cli + docker-cli-compose: für `docker compose` CLI-Befehle in compose.service.ts
+# (execAsync ruft docker compose pull/up auf — setzt docker binary im Container voraus).
+RUN apk add --no-cache openssl docker-cli docker-cli-compose
 
 # Copy compiled JavaScript output
 COPY --from=builder /build/apps/backend/dist/ ./dist/
