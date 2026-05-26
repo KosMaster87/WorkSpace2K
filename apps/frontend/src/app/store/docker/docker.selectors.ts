@@ -6,6 +6,7 @@
  */
 
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { DockerStack } from '@workspace2k/shared';
 import { DockerState } from './docker.state';
 
 /**
@@ -126,4 +127,36 @@ export const selectComposeStacks = createSelector(
 export const selectComposeStacksLoading = createSelector(
   selectDockerState,
   (state) => state.composeStacksLoading,
+);
+
+/**
+ * Gibt alle bekannten Stacks zurück — laufende und gestoppte zusammengeführt.
+ * @description Kombiniert den Docker-API-Scan (laufende Container nach Projekt) mit dem
+ *   Filesystem-Scan (Verzeichnisse mit Compose-Files). Compose-Stacks die noch nicht
+ *   gestartet wurden, erscheinen mit `containers: []` und status 'stopped'.
+ *   Reihenfolge: alphabetisch, '__standalone__' immer am Ende.
+ * @returns {DockerStack[]} Alle bekannten Stacks (running + stopped).
+ */
+export const selectMergedStacks = createSelector(
+  selectAllStacks,
+  selectComposeStacks,
+  (dockerStacks, composeStacks): DockerStack[] => {
+    const merged = new Map<string, DockerStack>();
+
+    // Basis: alle Compose-Stacks aus dem Filesystem-Scan (ggf. noch nicht gestartet)
+    for (const cs of composeStacks) {
+      merged.set(cs.name, { name: cs.name, containers: [], status: cs.status });
+    }
+
+    // Überschreiben/Anreichern mit echten Docker-Stacks (haben laufende Container)
+    for (const ds of dockerStacks) {
+      merged.set(ds.name, ds);
+    }
+
+    return Array.from(merged.values()).sort((a, b) => {
+      if (a.name === '__standalone__') return 1;
+      if (b.name === '__standalone__') return -1;
+      return a.name.localeCompare(b.name);
+    });
+  },
 );

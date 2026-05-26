@@ -22,10 +22,10 @@ import { DockerActions } from '../../store/docker/docker.actions';
 import { DestinationsActions } from '../../store/destinations/destinations.actions';
 import {
   selectAllContainers,
-  selectAllStacks,
   selectComposeStacks,
   selectDockerError,
   selectDockerLoading,
+  selectMergedStacks,
   selectPendingIds,
   selectStackPendingNames,
   selectStackUpdatingNames,
@@ -65,8 +65,8 @@ export class ServicesComponent implements OnInit {
   /** Signal: IDs mit laufenden Start/Stop/Remove-Requests. */
   readonly pendingIds = this.store.selectSignal(selectPendingIds);
 
-  /** Signal: Liste aller Stacks (für Stack-Ansicht). */
-  readonly stacks = this.store.selectSignal(selectAllStacks);
+  /** Signal: Alle Stacks — laufende (Docker API) + gestoppte (Filesystem-Scan) zusammengeführt. */
+  readonly stacks = this.store.selectSignal(selectMergedStacks);
 
   /** Signal: true während die Stacks geladen werden. */
   readonly stacksLoading = this.store.selectSignal(selectStacksLoading);
