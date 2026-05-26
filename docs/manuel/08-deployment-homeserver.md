@@ -100,9 +100,15 @@ docker compose logs -f
 ## Datenbank initialisieren (einmalig)
 
 ```bash
+# 1. Migrationen anwenden (Tabellen anlegen):
 docker compose exec backend npx prisma migrate deploy
-docker compose exec backend npx prisma db seed
+
+# 2. Admin-User + Standard-Destinations anlegen:
+docker compose exec backend npm run db:seed:prod
 ```
+
+> Die Seed-Variablen `SEED_ADMIN_EMAIL` und `SEED_ADMIN_PASSWORD` müssen in der `.env` gesetzt sein.
+> Nach dem ersten Login das Passwort ändern — danach können die Variablen aus der `.env` entfernt werden.
 
 ---
 
