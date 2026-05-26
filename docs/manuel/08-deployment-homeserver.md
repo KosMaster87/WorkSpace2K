@@ -140,7 +140,7 @@ docker compose exec backend npm run db:seed:prod
 Der Seed legt 9 Standard-Destinations an:
 - **Infrastruktur:** Nginx Proxy Manager (`http://192.168.188.24:81`)
 - **Security:** Vaultwarden
-- **Produktivität:** Nextcloud, WinBoat (`https://winboat.app` — externer Web-Emulator)
+- **Produktivität:** Nextcloud, WinBoat (`https://winboat.dev2ksoftware.com` — Windows in Docker, noVNC)
 - **Automation:** n8n
 - **DevOps:** Gitea, GitLab
 - **Kommunikation:** Element, Jitsi Meet
