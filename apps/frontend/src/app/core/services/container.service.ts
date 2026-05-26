@@ -192,6 +192,51 @@ export class ContainerService {
   }
 
   /**
+   * Liest den YAML-Inhalt der Compose-Datei eines Stacks.
+   * @description GET /api/docker/stacks/:name/compose
+   *   Wird für den Compose-File-Editor genutzt (Edit-Modus).
+   * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+   * @returns {Observable<string>} YAML-Inhalt der Compose-Datei.
+   */
+  getComposeContent(name: string): Observable<string> {
+    return this.http
+      .get<{ data: string }>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/compose`)
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Speichert den Compose-Datei-Inhalt und deployed den Stack via docker compose up -d.
+   * @description PUT /api/docker/stacks/:name/compose
+   *   Überschreibt die vorhandene Compose-Datei und startet den Stack neu.
+   *   Kann mehrere Minuten dauern (Image-Download).
+   * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+   * @param {string} content - Neuer YAML-Inhalt der Compose-Datei.
+   * @returns {Observable<StackUpdateResult>} Name + Ausgabe des Deployments.
+   */
+  saveAndDeployStack(name: string, content: string): Observable<StackUpdateResult> {
+    return this.http
+      .put<ApiStackUpdateResponse>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/compose`, {
+        content,
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Erstellt einen neuen Stack (Verzeichnis + compose.yaml + docker compose up -d).
+   * @description POST /api/docker/stacks
+   *   Erstellt das Stack-Verzeichnis in DOCKER_STACKS_PATH, schreibt compose.yaml
+   *   und startet den Stack via docker compose up -d.
+   * @param {string} name - Neuer Stack-Name (nur a-z, 0-9, _ und -).
+   * @param {string} content - YAML-Inhalt der compose.yaml.
+   * @returns {Observable<StackUpdateResult>} Name + Ausgabe des Deployments.
+   */
+  createStack(name: string, content: string): Observable<StackUpdateResult> {
+    return this.http
+      .post<ApiStackUpdateResponse>(`${this.apiUrl}/stacks`, { name, content })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
    * Öffnet einen SSE-Stream für Live-Logs eines Containers.
    * @description GET /api/docker/containers/:id/logs/stream
    *   Nutzt fetch() + ReadableStream statt EventSource, damit der normale

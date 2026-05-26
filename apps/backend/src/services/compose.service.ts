@@ -8,7 +8,7 @@
  */
 
 import { exec } from 'child_process';
-import { access, readdir } from 'fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import { ComposeStack, ServiceStatus, StackUpdateResult } from '@workspace2k/shared';
@@ -164,7 +164,7 @@ export async function updateStack(name: string): Promise<StackUpdateResult> {
 /**
  * Liest den Inhalt einer Compose-Datei eines Stacks.
  * @description Gibt den rohen YAML-Inhalt der Compose-Datei zurück.
- *   Wird für den zukünftigen Compose-File-Editor verwendet.
+ *   Wird für den Compose-File-Editor verwendet.
  * @async
  * @function getComposeContent
  * @param {string} name - Stack-Name.
@@ -177,6 +177,82 @@ export async function getComposeContent(name: string): Promise<string> {
   if (!stack) {
     throw Object.assign(new Error(`Stack '${name}' nicht gefunden`), { statusCode: 404 });
   }
-  const { readFile } = await import('fs/promises');
   return readFile(path.join(stack.path, stack.composeFile), 'utf-8');
+}
+
+/**
+ * Schreibt neuen Inhalt in die Compose-Datei und deployed den Stack via docker compose up -d.
+ * @description Überschreibt die vorhandene Compose-Datei mit dem neuen Inhalt und
+ *   startet den Stack neu. Der Stack muss bereits im Filesystem existieren.
+ *   Timeout: 5 Minuten (für große Images ausreichend).
+ * @async
+ * @function saveAndDeployStack
+ * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+ * @param {string} content - Neuer YAML-Inhalt der Compose-Datei.
+ * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe der Befehle.
+ * @throws {Error} statusCode 404 wenn Stack-Verzeichnis nicht gefunden.
+ * @throws {Error} Wenn docker compose fehlschlägt.
+ */
+export async function saveAndDeployStack(
+  name: string,
+  content: string,
+): Promise<StackUpdateResult> {
+  const stacks = await scanStacks();
+  const stack = stacks.find((s) => s.name === name);
+  if (!stack) {
+    throw Object.assign(new Error(`Stack '${name}' nicht gefunden`), { statusCode: 404 });
+  }
+  await writeFile(path.join(stack.path, stack.composeFile), content, 'utf-8');
+  const { stdout, stderr } = await execAsync('docker compose up -d', {
+    cwd: stack.path,
+    timeout: 5 * 60 * 1000,
+    env: { ...process.env, COMPOSE_ANSI: 'never' },
+  });
+  return { name, output: [stdout, stderr].filter(Boolean).join('\n') };
+}
+
+/**
+ * Erstellt einen neuen Stack: Verzeichnis anlegen + compose.yaml schreiben + docker compose up -d.
+ * @description Erstellt das Stack-Verzeichnis unter DOCKER_STACKS_PATH/<name>/,
+ *   schreibt den YAML-Inhalt als compose.yaml und startet den Stack.
+ *   Validiert den Stack-Namen (nur a-z, 0-9, - und _).
+ *   Fehler wenn Verzeichnis schon existiert (HTTP 409).
+ *   Fehler wenn DOCKER_STACKS_PATH nicht existiert (HTTP 503).
+ * @async
+ * @function createStack
+ * @param {string} name - Neuer Stack-Name (nur a-z, 0-9, _ und -).
+ * @param {string} content - YAML-Inhalt der compose.yaml.
+ * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe.
+ * @throws {Error} statusCode 400 bei ungültigem Stack-Namen.
+ * @throws {Error} statusCode 409 wenn Stack bereits existiert.
+ * @throws {Error} statusCode 503 wenn DOCKER_STACKS_PATH nicht existiert.
+ * @throws {Error} Wenn docker compose fehlschlägt.
+ */
+export async function createStack(name: string, content: string): Promise<StackUpdateResult> {
+  if (!/^[a-z0-9][a-z0-9_-]*$/.test(name)) {
+    throw Object.assign(
+      new Error(
+        'Ungültiger Stack-Name: nur a-z, 0-9, - und _ erlaubt. Muss mit a-z oder 0-9 beginnen.',
+      ),
+      { statusCode: 400 },
+    );
+  }
+  const basePath = getStacksPath();
+  if (!(await exists(basePath))) {
+    throw Object.assign(new Error(`Stacks-Verzeichnis nicht gefunden: ${basePath}`), {
+      statusCode: 503,
+    });
+  }
+  const stackPath = path.join(basePath, name);
+  if (await exists(stackPath)) {
+    throw Object.assign(new Error(`Stack '${name}' existiert bereits`), { statusCode: 409 });
+  }
+  await mkdir(stackPath, { recursive: true });
+  await writeFile(path.join(stackPath, 'compose.yaml'), content, 'utf-8');
+  const { stdout, stderr } = await execAsync('docker compose up -d', {
+    cwd: stackPath,
+    timeout: 5 * 60 * 1000,
+    env: { ...process.env, COMPOSE_ANSI: 'never' },
+  });
+  return { name, output: [stdout, stderr].filter(Boolean).join('\n') };
 }

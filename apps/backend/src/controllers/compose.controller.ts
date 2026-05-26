@@ -1,5 +1,5 @@
 /**
- * @fileoverview Compose Controller — HTTP-Handler für Filesystem-Scan und Stack-Update
+ * @fileoverview Compose Controller — HTTP-Handler für Filesystem-Scan und Stack-Editor
  * @description Verarbeitet HTTP-Requests für Compose-File-basierte Stack-Operationen.
  *   Delegiert die Logik an compose.service.ts.
  *   Im Gegensatz zum docker.controller.ts, der die Docker API direkt nutzt,
@@ -9,6 +9,8 @@
  *     GET  /api/docker/stacks/scan          → scanStacks
  *     POST /api/docker/stacks/:name/update  → updateStack
  *     GET  /api/docker/stacks/:name/compose → getComposeContent
+ *     PUT  /api/docker/stacks/:name/compose → saveAndDeployStack
+ *     POST /api/docker/stacks               → createStack
  * @module ComposeController
  */
 
@@ -71,7 +73,7 @@ export async function updateStack(req: Request, res: Response): Promise<void> {
  *   HTTP 200: { data: string } — YAML-Inhalt als String.
  *   HTTP 404: Stack oder Compose-File nicht gefunden.
  *   HTTP 503: Datei konnte nicht gelesen werden.
- *   Wird für den Compose-File-Editor genutzt (Phase 3d).
+ *   Wird für den Compose-File-Editor genutzt.
  * @async
  * @param {Request} req - Express Request mit Stack-Name in req.params.name.
  * @param {Response} res - Express Response mit { data: string }.
@@ -90,5 +92,82 @@ export async function getComposeContent(req: Request, res: Response): Promise<vo
     }
     const message = err instanceof Error ? err.message : 'Datei konnte nicht gelesen werden';
     res.status(503).json({ message: `Compose-File lesen fehlgeschlagen: ${message}` });
+  }
+}
+
+/**
+ * Speichert den Compose-Datei-Inhalt und deployed den Stack via docker compose up -d.
+ * @description PUT /api/docker/stacks/:name/compose
+ *   Body: { content: string } — neuer YAML-Inhalt.
+ *   HTTP 200: { data: StackUpdateResult } — Name + kombinierte Ausgabe.
+ *   HTTP 400: content fehlt im Body.
+ *   HTTP 404: Stack-Verzeichnis nicht gefunden.
+ *   HTTP 503: Schreiben oder docker compose fehlgeschlagen.
+ *   Überschreibt die vorhandene Compose-Datei und startet den Stack neu.
+ * @async
+ * @param {Request} req - Express Request mit Stack-Name und { content: string } im Body.
+ * @param {Response} res - Express Response mit { data: StackUpdateResult }.
+ * @returns {Promise<void>}
+ */
+export async function saveAndDeployStack(req: Request, res: Response): Promise<void> {
+  const { name } = req.params as { name: string };
+  const { content } = req.body as { content?: string };
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    res.status(400).json({ message: 'content ist erforderlich und darf nicht leer sein' });
+    return;
+  }
+  try {
+    const result = await composeService.saveAndDeployStack(name, content);
+    res.json({ data: result });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 404) {
+      res.status(404).json({ message: `Stack '${name}' nicht gefunden` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Deploy fehlgeschlagen';
+    res.status(503).json({ message: `Deploy fehlgeschlagen: ${message}` });
+  }
+}
+
+/**
+ * Erstellt einen neuen Stack — Verzeichnis, compose.yaml und docker compose up -d.
+ * @description POST /api/docker/stacks
+ *   Body: { name: string, content: string }
+ *   HTTP 201: { data: StackUpdateResult } — Name + Ausgabe des Deployments.
+ *   HTTP 400: Ungültiger Name oder fehlender Inhalt.
+ *   HTTP 409: Stack existiert bereits.
+ *   HTTP 503: DOCKER_STACKS_PATH nicht gefunden oder docker compose fehlgeschlagen.
+ * @async
+ * @param {Request} req - Express Request mit { name: string, content: string } im Body.
+ * @param {Response} res - Express Response mit { data: StackUpdateResult }.
+ * @returns {Promise<void>}
+ */
+export async function createStack(req: Request, res: Response): Promise<void> {
+  const { name, content } = req.body as { name?: string; content?: string };
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    res.status(400).json({ message: 'name ist erforderlich und darf nicht leer sein' });
+    return;
+  }
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    res.status(400).json({ message: 'content ist erforderlich und darf nicht leer sein' });
+    return;
+  }
+  try {
+    const result = await composeService.createStack(name.trim(), content);
+    res.status(201).json({ data: result });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status === 400) {
+      const message = err instanceof Error ? err.message : 'Ungültiger Stack-Name';
+      res.status(400).json({ message });
+      return;
+    }
+    if (status === 409) {
+      res.status(409).json({ message: `Stack '${name}' existiert bereits` });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Stack-Erstellung fehlgeschlagen';
+    res.status(503).json({ message: `Stack-Erstellung fehlgeschlagen: ${message}` });
   }
 }

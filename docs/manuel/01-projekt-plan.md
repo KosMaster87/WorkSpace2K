@@ -97,6 +97,9 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] Docker Phase 2 — Stacks-Ansicht + Flat-Ansicht (View-Toggle in Settings)
 - [x] Docker Phase 2 — Stack starten / stoppen
 - [x] Settings — Docker-Ansicht-Präferenz in localStorage gespeichert (`ws2k_docker_view`)
+- [x] Docker Phase 3a — Live-Logs via SSE (`GET /api/docker/containers/:id/logs/stream`)
+- [x] Docker Phase 3b — Filesystem-Scan (`GET /api/docker/stacks/scan`) + Stack-Update (`POST .../update`)
+- [x] Docker Phase 3c — Compose-File-Editor (neuen Stack erstellen, vorhandenen bearbeiten + deployen)
 
 ### Docker
 
@@ -134,7 +137,7 @@ WorkSpace2K Backend (Express + TypeScript)
 - [x] **Phase 3a** — Live-Logs via SSE (fetch + ReadableStream, Docker-Demux)
 - [x] **Phase 3b** — Filesystem-Scan für `/opt/stacks/` (`GET /api/docker/stacks/scan`)
 - [x] **Phase 3b** — Stack updaten via `docker compose pull && up -d` (`POST /api/docker/stacks/:name/update`)
-- [ ] **Phase 3c** — Compose-File-Editor (Stack deployen/bearbeiten)
+- [x] **Phase 3c** — Compose-File-Editor (Stack deployen/bearbeiten, neuen Stack erstellen)
 - [ ] **Phase 4** — Multi-Host Docker-Management (remote via Agent)
 - [ ] **Phase 4** — Template-System (häufige Services per Klick deployen)
 
