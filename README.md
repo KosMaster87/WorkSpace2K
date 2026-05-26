@@ -66,9 +66,9 @@ workspace2k-app/
 
 Two deployment options are documented:
 
-| Option | Guide | Use case |
-| --- | --- | --- |
-| VPS | [docs/manuel/03-deployment-vps.md](docs/manuel/03-deployment-vps.md) | Root server with full router access |
+| Option      | Guide                                                                              | Use case                                     |
+| ----------- | ---------------------------------------------------------------------------------- | -------------------------------------------- |
+| VPS         | [docs/manuel/03-deployment-vps.md](docs/manuel/03-deployment-vps.md)               | Root server with full router access          |
 | Home Server | [docs/manuel/08-deployment-homeserver.md](docs/manuel/08-deployment-homeserver.md) | Home server behind NAT via Cloudflare Tunnel |
 
 **Quick start (both options):**

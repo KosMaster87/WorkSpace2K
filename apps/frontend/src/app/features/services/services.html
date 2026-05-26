@@ -388,6 +388,69 @@
               ></textarea>
             }
           </div>
+
+          <!-- Auto-Destination (nur im Create-Modus) -->
+          @if (editorMode() === 'create') {
+            <div class="compose-editor__dest">
+              <label class="compose-editor__checkbox-label">
+                <input
+                  class="compose-editor__checkbox"
+                  type="checkbox"
+                  [checked]="destEnabled()"
+                  (change)="destEnabled.set($any($event.target).checked)"
+                  [disabled]="editorSaving()"
+                />
+                Als Destination anlegen
+              </label>
+              @if (destEnabled()) {
+                <div class="compose-editor__dest-fields">
+                  <div class="compose-editor__field">
+                    <label class="compose-editor__label" for="dest-url">
+                      URL <span class="compose-editor__required">*</span>
+                    </label>
+                    <input
+                      id="dest-url"
+                      class="compose-editor__input"
+                      type="url"
+                      placeholder="http://192.168.188.24:8080"
+                      [value]="destUrl()"
+                      (input)="destUrl.set($any($event.target).value)"
+                      [disabled]="editorSaving()"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="compose-editor__dest-row">
+                    <div class="compose-editor__field">
+                      <label class="compose-editor__label" for="dest-icon">Icon</label>
+                      <input
+                        id="dest-icon"
+                        class="compose-editor__input compose-editor__input--icon"
+                        type="text"
+                        placeholder="🐳"
+                        [value]="destIcon()"
+                        (input)="destIcon.set($any($event.target).value)"
+                        [disabled]="editorSaving()"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="compose-editor__field">
+                      <label class="compose-editor__label" for="dest-category">Kategorie</label>
+                      <input
+                        id="dest-category"
+                        class="compose-editor__input"
+                        type="text"
+                        placeholder="Infrastruktur"
+                        [value]="destCategory()"
+                        (input)="destCategory.set($any($event.target).value)"
+                        [disabled]="editorSaving()"
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
 
         <!-- Footer: Fehler + Buttons -->

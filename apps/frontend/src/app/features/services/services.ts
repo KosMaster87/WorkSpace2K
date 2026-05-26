@@ -8,6 +8,7 @@
  *   da Streaming-Daten lokal in Signals gehalten werden.
  *   Compose-Editor: lokaler Signal-State (kein NgRx) — öffnet sich als Modal-Overlay.
  *   Zwei Modi: 'create' (neuer Stack) und 'edit' (vorhandene Compose-Datei bearbeiten).
+ *   Auto-Destination: Im Create-Modus optional gleichzeitig eine Destination anlegen.
  * @module ServicesComponent
  */
 
@@ -18,6 +19,7 @@ import { Subscription } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
 import { AppStore } from '../../store/app/app.store';
 import { DockerActions } from '../../store/docker/docker.actions';
+import { DestinationsActions } from '../../store/destinations/destinations.actions';
 import {
   selectAllContainers,
   selectAllStacks,
@@ -103,6 +105,24 @@ export class ServicesComponent implements OnInit {
 
   /** Ausgabe (stdout/stderr) nach erfolgreichem Deploy oder null. */
   readonly deployOutput = signal<string | null>(null);
+
+  // ── Auto-Destination State (nur Create-Modus) ───────────────────────────────
+
+  /**
+   * true = Destination nach dem Deploy automatisch anlegen.
+   * @description Nur im Create-Modus sichtbar. Nach erfolgreichem Deploy wird
+   *   DestinationsActions.createDestination dispatcht.
+   */
+  readonly destEnabled = signal(false);
+
+  /** URL der neuen Destination (Pflichtfeld wenn destEnabled). */
+  readonly destUrl = signal('');
+
+  /** Optionales Emoji-Icon der Destination (z.B. '🐳'). */
+  readonly destIcon = signal('');
+
+  /** Optionale Kategorie der Destination (z.B. 'Infrastruktur'). */
+  readonly destCategory = signal('');
 
   // ── Live-Log State ──────────────────────────────────────────────────────────
 
@@ -331,7 +351,7 @@ export class ServicesComponent implements OnInit {
 
   /**
    * Öffnet den Editor im Create-Modus (neuer Stack).
-   * @description Setzt alle Editor-Felder zurück auf Standardwerte.
+   * @description Setzt alle Editor-Felder und Destination-Felder zurück auf Standardwerte.
    * @returns {void}
    */
   openCreateEditor(): void {
@@ -342,6 +362,10 @@ export class ServicesComponent implements OnInit {
     this.deployOutput.set(null);
     this.editorLoading.set(false);
     this.editorSaving.set(false);
+    this.destEnabled.set(false);
+    this.destUrl.set('');
+    this.destIcon.set('');
+    this.destCategory.set('');
     this.editorOpen.set(true);
   }
 
@@ -424,6 +448,19 @@ export class ServicesComponent implements OnInit {
         // Nach erfolgreichem Deploy Container und Stacks neu laden
         this.store.dispatch(DockerActions.loadContainers());
         this.store.dispatch(DockerActions.scanComposeStacks());
+        // Auto-Destination: nur im Create-Modus wenn aktiviert und URL gesetzt
+        if (this.editorMode() === 'create' && this.destEnabled() && this.destUrl().trim()) {
+          this.store.dispatch(
+            DestinationsActions.createDestination({
+              payload: {
+                name: name,
+                url: this.destUrl().trim(),
+                icon: this.destIcon().trim() || undefined,
+                category: this.destCategory().trim() || undefined,
+              },
+            }),
+          );
+        }
       },
       error: (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Deploy fehlgeschlagen';

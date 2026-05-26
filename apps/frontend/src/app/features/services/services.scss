@@ -623,6 +623,63 @@
     margin-left: auto;
   }
 
+  // ── Auto-Destination Section ──────────────────────────────────────────────
+
+  &__dest {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: color-mix(in srgb, var(--accent-color, #6366f1) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-color, #6366f1) 25%, transparent);
+    border-radius: var(--radius-md);
+  }
+
+  &__checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent-color, #6366f1);
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__required {
+    color: var(--error-color);
+    margin-left: 2px;
+  }
+
+  &__dest-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  &__dest-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: var(--space-3);
+  }
+
+  &__input--icon {
+    text-align: center;
+    font-size: var(--font-size-lg);
+    padding: var(--space-1) var(--space-2);
+  }
+
   &__output {
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;

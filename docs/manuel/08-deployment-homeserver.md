@@ -110,6 +110,19 @@ docker compose exec backend npm run db:seed:prod
 > Die Seed-Variablen `SEED_ADMIN_EMAIL` und `SEED_ADMIN_PASSWORD` müssen in der `.env` gesetzt sein.
 > Nach dem ersten Login das Passwort ändern — danach können die Variablen aus der `.env` entfernt werden.
 
+> ⚠️ Nach `.env`-Änderungen den Backend-Container neu starten:
+> `docker compose up -d backend` — erst dann werden neue Umgebungsvariablen übernommen.
+
+Der Seed legt 9 Standard-Destinations an:
+- **Infrastruktur:** Nginx Proxy Manager (`http://192.168.188.24:81`)
+- **Security:** Vaultwarden
+- **Produktivität:** Nextcloud, Winboard
+- **Automation:** n8n
+- **DevOps:** Gitea, GitLab
+- **Kommunikation:** Element, Jitsi Meet
+
+URLs danach in WorkSpace2K → Destinations anpassen.
+
 ---
 
 ## NPM Proxy Host konfigurieren
@@ -169,9 +182,48 @@ docker compose -f docker/docker-compose.yml ps
 # Logs:
 docker compose -f docker/docker-compose.yml logs -f
 
-# Tunnel-Status:
+# Tunnel-Status (systemd):
 sudo systemctl status cloudflared
+
+# Tunnel-Status (Docker — wenn migriert):
+docker compose -f /opt/stacks/cloudflared/compose.yaml ps
 
 # NPM-Status:
 docker compose -f /opt/stacks/npm/compose.yaml ps
+```
+
+---
+
+## Cloudflare Tunnel als Docker Stack (optional)
+
+Alle Dienste einheitlich als Docker-Stacks verwalten — sichtbar in WorkSpace2K.
+
+```bash
+# Stack-Verzeichnis anlegen:
+mkdir -p /opt/stacks/cloudflared
+```
+
+Datei `/opt/stacks/cloudflared/compose.yaml`:
+```yaml
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    volumes:
+      - /etc/cloudflared:/etc/cloudflared:ro
+    network_mode: host
+```
+
+```bash
+# systemd-Dienst stoppen:
+sudo systemctl stop cloudflared
+sudo systemctl disable cloudflared
+
+# Docker-Stack starten:
+docker compose -f /opt/stacks/cloudflared/compose.yaml up -d
+
+# Prüfen:
+docker compose -f /opt/stacks/cloudflared/compose.yaml logs -f
 ```

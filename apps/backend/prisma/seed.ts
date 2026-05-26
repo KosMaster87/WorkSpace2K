@@ -60,33 +60,54 @@ async function seedDestinations(): Promise<void> {
   }
 
   const defaults = [
+    // ── Infrastruktur ────────────────────────────────────────────────────────
     {
       name: 'Nginx Proxy Manager',
-      url: 'http://localhost:81',
+      url: 'http://192.168.188.24:81',
       icon: '🔀',
       category: 'Infrastruktur',
-      description: 'Reverse Proxy — verwaltet alle lokalen Domains',
+      description: 'Reverse Proxy — verwaltet alle lokalen Domains und SSL',
       sortOrder: 0,
     },
+    // ── Security ─────────────────────────────────────────────────────────────
     {
       name: 'Vaultwarden',
-      url: 'https://vaultwarden.localhost',
+      url: 'https://vaultwarden.dev2ksoftware.com',
       icon: '🔒',
       category: 'Security',
       description: 'Passwort-Manager (Bitwarden-kompatibel)',
       sortOrder: 0,
     },
+    // ── Produktivität ─────────────────────────────────────────────────────────
+    {
+      name: 'Nextcloud',
+      url: 'https://nextcloud.dev2ksoftware.com',
+      icon: '☁️',
+      category: 'Produktivität',
+      description: 'Self-hosted Cloud — Dateien, Kalender, Kontakte',
+      sortOrder: 0,
+    },
+    {
+      name: 'Winboard',
+      url: 'https://winboard.dev2ksoftware.com',
+      icon: '📋',
+      category: 'Produktivität',
+      description: 'Kanban-Board',
+      sortOrder: 1,
+    },
+    // ── Automation ───────────────────────────────────────────────────────────
     {
       name: 'n8n',
-      url: 'https://n8n.localhost',
+      url: 'https://n8n.dev2ksoftware.com',
       icon: '⚙️',
       category: 'Automation',
       description: 'Workflow-Automatisierung',
       sortOrder: 0,
     },
+    // ── DevOps ───────────────────────────────────────────────────────────────
     {
       name: 'Gitea',
-      url: 'https://gitea.localhost',
+      url: 'https://gitea.dev2ksoftware.com',
       icon: '🐙',
       category: 'DevOps',
       description: 'Self-hosted Git-Service',
@@ -94,24 +115,34 @@ async function seedDestinations(): Promise<void> {
     },
     {
       name: 'GitLab',
-      url: 'https://gitlab.localhost',
+      url: 'https://gitlab.dev2ksoftware.com',
       icon: '🦊',
       category: 'DevOps',
-      description: 'Git, CI/CD, Issues',
+      description: 'Git, CI/CD, Issues, Merge Requests',
       sortOrder: 1,
     },
+    // ── Kommunikation ─────────────────────────────────────────────────────────
     {
       name: 'Element',
-      url: 'https://element.localhost',
+      url: 'https://element.dev2ksoftware.com',
       icon: '💬',
       category: 'Kommunikation',
-      description: 'Matrix-Client',
+      description: 'Matrix-Client — verschlüsselte Chats',
       sortOrder: 0,
+    },
+    {
+      name: 'Jitsi Meet',
+      url: 'https://meet.jit.si',
+      icon: '🎥',
+      category: 'Kommunikation',
+      description: 'Video-Konferenzen (öffentliche Instanz)',
+      sortOrder: 1,
     },
   ];
 
   await prisma.destination.createMany({ data: defaults });
   console.log(`✓ ${defaults.length} Standard-Destinations angelegt.`);
+  console.log('  → URLs bitte in der App an die eigene Infrastruktur anpassen.');
 }
 
 /**
