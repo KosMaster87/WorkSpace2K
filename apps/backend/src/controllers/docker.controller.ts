@@ -22,6 +22,7 @@
 import { Request, Response } from 'express';
 import * as composeService from '../services/compose.service';
 import * as dockerService from '../services/docker.service';
+import * as npmService from '../services/npm.service';
 
 /**
  * Gibt alle Docker-Container zurück.
@@ -193,6 +194,8 @@ export async function getStacks(_req: Request, res: Response): Promise<void> {
  *   Zwei Pfade:
  *   1. Container vorhanden (Stack wurde schon mal deployed) → Docker API container.start()
  *   2. Keine Container (frischer Stack, noch nie deployed) → docker compose up -d
+ *   Nach erfolgreichem Start: NPM Proxy Hosts werden fire-and-forget provisioned
+ *   (blockiert den HTTP-Response nicht; Fehler werden nur geloggt).
  *   HTTP 200: Stack erfolgreich gestartet.
  *   HTTP 404: Stack nicht gefunden.
  *   HTTP 503: Docker Socket oder Compose-Fehler.
@@ -214,6 +217,15 @@ export async function startStack(req: Request, res: Response): Promise<void> {
       // Stack bereits bekannt — gestoppte Container starten
       await dockerService.startStack(name);
     }
+
+    // NPM Proxy Hosts automatisch anlegen — fire-and-forget, blockiert Response nicht
+    composeService
+      .findStack(name)
+      .then((stack) => {
+        if (stack) return npmService.ensureProxyHosts(stack);
+      })
+      .catch((err: Error) => console.error(`[npm] Provisioning-Fehler für ${name}:`, err.message));
+
     res.json({ data: null, message: `Stack ${name} gestartet` });
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode;

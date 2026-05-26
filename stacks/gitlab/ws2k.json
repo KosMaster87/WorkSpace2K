@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "gitlab", "container": "gitlab", "port": 80, "websockets": true }
+  ]
+}

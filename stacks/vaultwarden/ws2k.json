@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "vaultwarden", "container": "vaultwarden", "port": 80, "websockets": true }
+  ]
+}

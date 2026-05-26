@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "n8n", "container": "n8n", "port": 5678, "websockets": true }
+  ]
+}

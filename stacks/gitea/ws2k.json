@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "gitea", "container": "gitea", "port": 3000, "websockets": true }
+  ]
+}

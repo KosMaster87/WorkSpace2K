@@ -14,6 +14,7 @@ Self-hosted Homelab Management Portal.
 | 06  | [06-docker-konzept.md](06-docker-konzept.md)             | Docker-Management Konzept — Stacks, Roadmap      | ✅     |
 | 07  | [07-live-logs-sse.md](07-live-logs-sse.md)               | Live-Logs via SSE — fetch vs EventSource, Demux  | ✅     |
 | 08  | [08-deployment-homeserver.md](08-deployment-homeserver.md) | Home-Server Deployment via Cloudflare Tunnel   | ✅     |
+| 09  | [09-npm-auto-provisioning.md](09-npm-auto-provisioning.md) | NPM Auto-Provisioning — ws2k.json, API, Tokens | ✅     |
 
 ## Schnelllinks
 

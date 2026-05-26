@@ -22,6 +22,9 @@ services:
       dockerfile: apps/backend/Dockerfile
     container_name: ws2k-backend
     restart: unless-stopped
+    extra_hosts:
+      # Linux: host.docker.internal auflösen → erreicht NPM auf Port 81 des Hosts
+      - 'host.docker.internal:host-gateway'
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -33,6 +36,12 @@ services:
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}
       # Stacks-Scan-Pfade (kommagetrennt) — Standard + workspace2k/stacks im Repo
       - DOCKER_STACKS_PATH=/opt/stacks,/opt/stacks/workspace2k/stacks
+      # NPM Auto-Provisioning (optional) — Proxy Hosts automatisch anlegen beim Stack-Start
+      # Leer lassen = NPM-Integration deaktiviert (kein Fehler, kein Lärm)
+      - NPM_URL=${NPM_URL:-http://host.docker.internal:81}
+      - NPM_EMAIL=${NPM_EMAIL:-}
+      - NPM_PASSWORD=${NPM_PASSWORD:-}
+      - BASE_DOMAIN=${BASE_DOMAIN:-}
     volumes:
       # Docker Socket — für Container-Management (docker ps, logs, start/stop)
       # :z — SELinux-Label für Fedora/RHEL (relabelt den Mount als shared)

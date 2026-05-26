@@ -11,7 +11,12 @@ import { exec } from 'child_process';
 import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
-import { ComposeStack, ServiceStatus, StackUpdateResult } from '@workspace2k/shared';
+import {
+  ComposeStack,
+  ServiceStatus,
+  StackProxyConfig,
+  StackUpdateResult,
+} from '@workspace2k/shared';
 import * as dockerService from './docker.service';
 
 const execAsync = promisify(exec);
@@ -124,6 +129,33 @@ async function findComposeFile(dirPath: string): Promise<string | null> {
 }
 
 /**
+ * Liest die NPM Proxy-Konfiguration aus ws2k.json eines Stacks.
+ * @description Sucht nach ws2k.json im Stack-Verzeichnis und liest das proxy-Array.
+ *   Gibt undefined zurück wenn die Datei nicht vorhanden ist (kein Fehler).
+ *   Gibt undefined zurück wenn JSON ungültig oder proxy-Array fehlt.
+ *   Fehler werden geloggt aber nicht geworfen — ein fehlerhaftes ws2k.json
+ *   darf den gesamten Stack-Scan nicht blockieren.
+ * @async
+ * @function readStackProxyConfig
+ * @param {string} dirPath - Absoluter Pfad zum Stack-Verzeichnis.
+ * @returns {Promise<StackProxyConfig[] | undefined>} Proxy-Einträge oder undefined.
+ * @private
+ */
+async function readStackProxyConfig(dirPath: string): Promise<StackProxyConfig[] | undefined> {
+  const filePath = path.join(dirPath, 'ws2k.json');
+  if (!(await exists(filePath))) return undefined;
+  try {
+    const raw = await readFile(filePath, 'utf-8');
+    const parsed = JSON.parse(raw) as { proxy?: unknown };
+    if (!Array.isArray(parsed.proxy)) return undefined;
+    return parsed.proxy as StackProxyConfig[];
+  } catch (e) {
+    console.warn(`[compose] ws2k.json in ${dirPath} konnte nicht gelesen werden:`, e);
+    return undefined;
+  }
+}
+
+/**
  * Bestimmt den aggregierten Status eines Stacks anhand laufender Docker-Container.
  * @description Vergleicht den Stack-Namen (= Verzeichnisname) mit dem
  *   com.docker.compose.project-Label der Container.
@@ -175,11 +207,37 @@ export async function scanStacks(): Promise<ComposeStack[]> {
       if (!composeFile) continue;
 
       const status = await resolveStackStatus(dir.name);
-      results.push({ name: dir.name, path: dirPath, composeFile, status });
+      const proxy = await readStackProxyConfig(dirPath);
+      results.push({ name: dir.name, path: dirPath, composeFile, status, proxy });
     }
   }
 
   return results.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Gibt einen einzelnen Stack mit vollständiger Konfiguration zurück.
+ * @description Effizienter als scanStacks() wenn nur ein Stack benötigt wird —
+ *   iteriert nur bis der gesuchte Stack gefunden wird.
+ *   Liest ws2k.json wenn vorhanden (Proxy-Konfiguration für NPM-Provisioning).
+ * @async
+ * @function findStack
+ * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+ * @returns {Promise<ComposeStack | null>} Stack-Objekt oder null wenn nicht gefunden.
+ */
+export async function findStack(name: string): Promise<ComposeStack | null> {
+  const basePaths = getStacksPaths();
+  for (const basePath of basePaths) {
+    if (!(await exists(basePath))) continue;
+    const dirPath = path.join(basePath, name);
+    if (!(await exists(dirPath))) continue;
+    const composeFile = await findComposeFile(dirPath);
+    if (!composeFile) continue;
+    const status = await resolveStackStatus(name);
+    const proxy = await readStackProxyConfig(dirPath);
+    return { name, path: dirPath, composeFile, status, proxy };
+  }
+  return null;
 }
 
 /**

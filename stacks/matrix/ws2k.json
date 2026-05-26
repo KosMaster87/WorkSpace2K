@@ -1,0 +1,6 @@
+{
+  "proxy": [
+    { "subdomain": "matrix", "container": "synapse", "port": 8008, "websockets": true },
+    { "subdomain": "element", "container": "element", "port": 80, "websockets": true }
+  ]
+}
