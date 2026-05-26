@@ -1,0 +1,30 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    restart: unless-stopped
+
+    environment:
+      # User-IDs vom Host (prüfen mit: id -u && id -g)
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__time__DEFAULT_UTC_OFFSET=+2
+
+    volumes:
+      - gitea_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+    ports:
+      # SSH für git clone — anderer Port als Host-SSH (22)
+      - "222:22"
+
+    networks:
+      - npm_proxy  # HTTP läuft über NPM, kein Port 3000 nötig
+
+networks:
+  npm_proxy:
+    external: true
+
+volumes:
+  gitea_data:

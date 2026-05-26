@@ -1,0 +1,41 @@
+services:
+  # ── Synapse — Matrix Homeserver ──────────────────────────────────
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse
+    restart: unless-stopped
+
+    environment:
+      - SYNAPSE_SERVER_NAME=matrix.dev2ksoftware.com
+      - SYNAPSE_REPORT_STATS=no
+
+    volumes:
+      - synapse_data:/data
+
+    networks:
+      - npm_proxy
+
+    # Erster Start: docker compose run --rm synapse generate
+
+  # ── Element Web — Matrix Client ──────────────────────────────────
+  element:
+    image: vectorim/element-web:latest
+    container_name: element
+    restart: unless-stopped
+
+    volumes:
+      # :z = SELinux-Relabeling (Pflicht auf Fedora!)
+      - ./element-config.json:/app/config.json:ro,z
+
+    networks:
+      - npm_proxy
+
+    depends_on:
+      - synapse
+
+networks:
+  npm_proxy:
+    external: true
+
+volumes:
+  synapse_data:

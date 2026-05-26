@@ -1,0 +1,28 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+
+    environment:
+      # Registrierung erlauben — nach erstem Account auf "false" setzen!
+      - SIGNUPS_ALLOWED=true
+      # WebSocket für Live-Updates (Sync zwischen Geräten)
+      - WEBSOCKET_ENABLED=true
+      # Admin-Panel unter /admin — sicheres Token setzen!
+      # Token generieren: openssl rand -base64 48
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-changeme-use-openssl-rand-base64-48}
+
+    volumes:
+      - vw_data:/data
+
+    networks:
+      # NPM leitet weiter — kein "ports:" nötig
+      - npm_proxy
+
+networks:
+  npm_proxy:
+    external: true  # erstellt von /opt/stacks/npm/ → Netzwerkname: npm_proxy
+
+volumes:
+  vw_data:

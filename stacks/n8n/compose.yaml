@@ -1,0 +1,28 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+
+    environment:
+      - N8N_HOST=n8n.dev2ksoftware.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.dev2ksoftware.com/
+      - GENERIC_TIMEZONE=Europe/Berlin
+      - TZ=Europe/Berlin
+      # Sicherheit — eigenen Key generieren: openssl rand -hex 32
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+    networks:
+      - npm_proxy
+
+networks:
+  npm_proxy:
+    external: true
+
+volumes:
+  n8n_data:

@@ -1,0 +1,35 @@
+services:
+  winboat:
+    image: dockurr/windows:latest
+    container_name: winboat
+    restart: unless-stopped
+
+    environment:
+      # Windows-Version: 11, 10, 2022, 2019 ...
+      - VERSION=11
+      # RAM und CPU für die VM
+      - RAM_SIZE=4G
+      - CPU_CORES=2
+      # Festplattengröße
+      - DISK_SIZE=64G
+
+    volumes:
+      - winboat_data:/storage
+
+    ports:
+      # noVNC — Windows-Desktop im Browser
+      - "8006:8006"
+      # RDP — Remote Desktop (empfohlen: flüssiger als noVNC)
+      - "3389:3389"
+
+    devices:
+      # KVM für Hardware-Virtualisierung (deutlich schneller)
+      - /dev/kvm:/dev/kvm
+
+    cap_add:
+      - NET_ADMIN
+
+    stop_grace_period: 2m
+
+volumes:
+  winboat_data:

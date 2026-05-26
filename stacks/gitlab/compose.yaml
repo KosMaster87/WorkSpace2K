@@ -1,0 +1,52 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: gitlab.dev2ksoftware.com
+
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://gitlab.dev2ksoftware.com'
+        # GitLabs internes nginx auf HTTP — NPM übernimmt SSL
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['proxy_set_headers'] = {
+          'X-Forwarded-Proto' => 'https',
+          'X-Forwarded-Ssl' => 'on'
+        }
+        # SSH auf Port 2222 (22 ist für Host-SSH reserviert)
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        # Performance: weniger Worker für lokalen Betrieb
+        puma['worker_processes'] = 2
+        sidekiq['concurrency'] = 5
+        prometheus_monitoring['enable'] = false
+
+    ports:
+      - "2222:22"  # SSH für git clone
+
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+
+    shm_size: '256m'
+
+    networks:
+      - npm_proxy
+
+    healthcheck:
+      test: ["CMD", "/opt/gitlab/bin/gitlab-healthcheck"]
+      interval: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 300s  # GitLab braucht beim ersten Start 3-5 Minuten
+
+networks:
+  npm_proxy:
+    external: true
+
+volumes:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:

@@ -1,0 +1,50 @@
+services:
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+
+    environment:
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.dev2ksoftware.com
+      - POSTGRES_HOST=nextcloud-db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+    volumes:
+      - nextcloud_data:/var/www/html
+
+    networks:
+      - npm_proxy
+      - nextcloud_internal
+
+    depends_on:
+      - nextcloud-db
+
+  nextcloud-db:
+    image: postgres:17-alpine
+    container_name: nextcloud-db
+    restart: unless-stopped
+
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+    volumes:
+      - nextcloud_db:/var/lib/postgresql/data
+
+    networks:
+      - nextcloud_internal
+
+networks:
+  npm_proxy:
+    external: true
+  nextcloud_internal:
+    driver: bridge
+
+volumes:
+  nextcloud_data:
+  nextcloud_db:

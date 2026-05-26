@@ -31,11 +31,15 @@ services:
       # Seed-Variablen — nur für einmalige DB-Initialisierung benötigt
       - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-}
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}
+      # Stacks-Scan-Pfade (kommagetrennt) — Standard + workspace2k/stacks im Repo
+      - DOCKER_STACKS_PATH=/opt/stacks,/opt/stacks/workspace2k/stacks
     volumes:
       # Docker Socket — für Container-Management (docker ps, logs, start/stop)
-      - /var/run/docker.sock:/var/run/docker.sock
+      # :z — SELinux-Label für Fedora/RHEL (relabelt den Mount als shared)
+      - /var/run/docker.sock:/var/run/docker.sock:z
       # Stacks-Verzeichnis — für Compose-Editor (lesen + schreiben)
-      - /opt/stacks:/opt/stacks
+      # :z — SELinux-Label für Fedora/RHEL
+      - /opt/stacks:/opt/stacks:z
     networks:
       - ws2k
     depends_on:

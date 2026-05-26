@@ -23,13 +23,19 @@ const execAsync = promisify(exec);
 const COMPOSE_FILES = ['compose.yaml', 'compose.yml', 'docker-compose.yaml', 'docker-compose.yml'];
 
 /**
- * Gibt den konfigurierten Stacks-Pfad zurück.
- * @description Liest DOCKER_STACKS_PATH aus der Umgebung, Standard: /opt/stacks.
- * @returns {string} Absoluter Pfad zum Stacks-Verzeichnis.
+ * Gibt alle konfigurierten Stacks-Pfade zurück.
+ * @description Liest DOCKER_STACKS_PATH aus der Umgebung — kommagetrennte Liste
+ *   erlaubt mehrere Scan-Verzeichnisse. Standard: /opt/stacks.
+ *   Beispiel: DOCKER_STACKS_PATH=/opt/stacks,/opt/stacks/workspace2k/stacks
+ * @returns {string[]} Liste absoluter Pfade zu Stacks-Verzeichnissen.
  * @private
  */
-function getStacksPath(): string {
-  return process.env['DOCKER_STACKS_PATH'] ?? '/opt/stacks';
+function getStacksPaths(): string[] {
+  const raw = process.env['DOCKER_STACKS_PATH'] ?? '/opt/stacks';
+  return raw
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -84,31 +90,37 @@ async function resolveStackStatus(name: string): Promise<ServiceStatus> {
 }
 
 /**
- * Scannt das Stacks-Verzeichnis und gibt alle gefundenen Compose-Stacks zurück.
- * @description Durchsucht DOCKER_STACKS_PATH nach Unterverzeichnissen mit Compose-Files.
- *   Gibt leeres Array zurück wenn das Verzeichnis nicht existiert (graceful degradation).
- *   Status wird durch Abgleich mit Docker API ermittelt.
+ * Scannt alle konfigurierten Stacks-Verzeichnisse und gibt gefundene Compose-Stacks zurück.
+ * @description Durchsucht alle Pfade aus DOCKER_STACKS_PATH (kommagetrennt) nach
+ *   Unterverzeichnissen mit Compose-Files. Nicht-existente Pfade werden übersprungen
+ *   (graceful degradation). Duplikate (gleicher Stack-Name) werden dedupliziert —
+ *   der erste Treffer gewinnt. Status wird durch Abgleich mit Docker API ermittelt.
  * @async
  * @function scanStacks
- * @returns {Promise<ComposeStack[]>} Liste aller gefundenen Compose-Stacks.
+ * @returns {Promise<ComposeStack[]>} Liste aller gefundenen Compose-Stacks, alphabetisch.
  */
 export async function scanStacks(): Promise<ComposeStack[]> {
-  const basePath = getStacksPath();
-
-  if (!(await exists(basePath))) return [];
-
-  const entries = await readdir(basePath, { withFileTypes: true });
-  const dirs = entries.filter((e) => e.isDirectory());
-
+  const basePaths = getStacksPaths();
+  const seen = new Set<string>();
   const results: ComposeStack[] = [];
 
-  for (const dir of dirs) {
-    const dirPath = path.join(basePath, dir.name);
-    const composeFile = await findComposeFile(dirPath);
-    if (!composeFile) continue;
+  for (const basePath of basePaths) {
+    if (!(await exists(basePath))) continue;
 
-    const status = await resolveStackStatus(dir.name);
-    results.push({ name: dir.name, path: dirPath, composeFile, status });
+    const entries = await readdir(basePath, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory());
+
+    for (const dir of dirs) {
+      if (seen.has(dir.name)) continue; // Duplikat überspringen
+      seen.add(dir.name);
+
+      const dirPath = path.join(basePath, dir.name);
+      const composeFile = await findComposeFile(dirPath);
+      if (!composeFile) continue;
+
+      const status = await resolveStackStatus(dir.name);
+      results.push({ name: dir.name, path: dirPath, composeFile, status });
+    }
   }
 
   return results.sort((a, b) => a.name.localeCompare(b.name));
@@ -116,7 +128,8 @@ export async function scanStacks(): Promise<ComposeStack[]> {
 
 /**
  * Findet den Stack-Pfad für einen gegebenen Stack-Namen.
- * @description Durchsucht DOCKER_STACKS_PATH nach einem Verzeichnis mit dem Namen.
+ * @description Durchsucht alle konfigurierten DOCKER_STACKS_PATH-Verzeichnisse
+ *   nach einem Verzeichnis mit dem Namen.
  * @async
  * @function findStackPath
  * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
@@ -127,8 +140,9 @@ export async function findStackPath(name: string): Promise<string> {
   const stacks = await scanStacks();
   const stack = stacks.find((s) => s.name === name);
   if (!stack) {
+    const searchedPaths = getStacksPaths().join(', ');
     throw Object.assign(
-      new Error(`Compose-File für Stack '${name}' nicht gefunden in ${getStacksPath()}`),
+      new Error(`Compose-File für Stack '${name}' nicht gefunden in ${searchedPaths}`),
       { statusCode: 404 },
     );
   }
@@ -213,11 +227,11 @@ export async function saveAndDeployStack(
 
 /**
  * Erstellt einen neuen Stack: Verzeichnis anlegen + compose.yaml schreiben + docker compose up -d.
- * @description Erstellt das Stack-Verzeichnis unter DOCKER_STACKS_PATH/<name>/,
+ * @description Erstellt das Stack-Verzeichnis unter dem ersten DOCKER_STACKS_PATH-Eintrag,
  *   schreibt den YAML-Inhalt als compose.yaml und startet den Stack.
  *   Validiert den Stack-Namen (nur a-z, 0-9, - und _).
  *   Fehler wenn Verzeichnis schon existiert (HTTP 409).
- *   Fehler wenn DOCKER_STACKS_PATH nicht existiert (HTTP 503).
+ *   Fehler wenn das primäre DOCKER_STACKS_PATH nicht existiert (HTTP 503).
  * @async
  * @function createStack
  * @param {string} name - Neuer Stack-Name (nur a-z, 0-9, _ und -).
@@ -225,7 +239,7 @@ export async function saveAndDeployStack(
  * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe.
  * @throws {Error} statusCode 400 bei ungültigem Stack-Namen.
  * @throws {Error} statusCode 409 wenn Stack bereits existiert.
- * @throws {Error} statusCode 503 wenn DOCKER_STACKS_PATH nicht existiert.
+ * @throws {Error} statusCode 503 wenn primäres DOCKER_STACKS_PATH nicht existiert.
  * @throws {Error} Wenn docker compose fehlschlägt.
  */
 export async function createStack(name: string, content: string): Promise<StackUpdateResult> {
@@ -237,7 +251,8 @@ export async function createStack(name: string, content: string): Promise<StackU
       { statusCode: 400 },
     );
   }
-  const basePath = getStacksPath();
+  // Neuer Stack wird immer im ersten (primären) Stacks-Pfad angelegt
+  const basePath = getStacksPaths()[0];
   if (!(await exists(basePath))) {
     throw Object.assign(new Error(`Stacks-Verzeichnis nicht gefunden: ${basePath}`), {
       statusCode: 503,

@@ -1,0 +1,24 @@
+services:
+  couchdb:
+    image: couchdb:latest
+    container_name: obsidian-couchdb
+    restart: unless-stopped
+
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+      - couchdb_config:/opt/couchdb/etc/local.d
+
+    networks:
+      - npm_proxy
+
+networks:
+  npm_proxy:
+    external: true
+
+volumes:
+  couchdb_data:
+  couchdb_config:
