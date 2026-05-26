@@ -195,6 +195,29 @@ export async function getComposeContent(name: string): Promise<string> {
 }
 
 /**
+ * Startet einen Stack via docker compose up -d (ohne Pull, ohne Datei-Änderung).
+ * @description Führt `docker compose up -d` im Stack-Verzeichnis aus — startet
+ *   Container aus vorhandenen oder zu bauenden Images. Geeignet für frische Stacks
+ *   die noch nie deployed wurden (keine Container vorhanden).
+ *   Timeout: 5 Minuten.
+ * @async
+ * @function composeUpStack
+ * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+ * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe.
+ * @throws {Error} statusCode 404 wenn Stack nicht gefunden.
+ * @throws {Error} Wenn docker compose fehlschlägt.
+ */
+export async function composeUpStack(name: string): Promise<StackUpdateResult> {
+  const stackPath = await findStackPath(name);
+  const { stdout, stderr } = await execAsync('docker compose up -d', {
+    cwd: stackPath,
+    timeout: 5 * 60 * 1000,
+    env: { ...process.env, COMPOSE_ANSI: 'never' },
+  });
+  return { name, output: [stdout, stderr].filter(Boolean).join('\n') };
+}
+
+/**
  * Schreibt neuen Inhalt in die Compose-Datei und deployed den Stack via docker compose up -d.
  * @description Überschreibt die vorhandene Compose-Datei mit dem neuen Inhalt und
  *   startet den Stack neu. Der Stack muss bereits im Filesystem existieren.

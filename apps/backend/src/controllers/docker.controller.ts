@@ -20,6 +20,7 @@
  */
 
 import { Request, Response } from 'express';
+import * as composeService from '../services/compose.service';
 import * as dockerService from '../services/docker.service';
 
 /**
@@ -187,11 +188,14 @@ export async function getStacks(_req: Request, res: Response): Promise<void> {
 }
 
 /**
- * Startet alle gestoppten Container eines Stacks.
+ * Startet alle gestoppten Container eines Stacks — oder deployed ihn wenn noch keine Container vorhanden.
  * @description POST /api/docker/stacks/:name/start
- *   HTTP 200: Stack-Container erfolgreich gestartet.
- *   HTTP 404: Stack nicht gefunden (kein Container mit diesem Projekt-Label).
- *   HTTP 503: Docker Socket nicht erreichbar.
+ *   Zwei Pfade:
+ *   1. Container vorhanden (Stack wurde schon mal deployed) → Docker API container.start()
+ *   2. Keine Container (frischer Stack, noch nie deployed) → docker compose up -d
+ *   HTTP 200: Stack erfolgreich gestartet.
+ *   HTTP 404: Stack nicht gefunden.
+ *   HTTP 503: Docker Socket oder Compose-Fehler.
  * @async
  * @param {Request} req - Express Request mit Stack-Name in req.params.name.
  * @param {Response} res - Express Response.
@@ -200,7 +204,16 @@ export async function getStacks(_req: Request, res: Response): Promise<void> {
 export async function startStack(req: Request, res: Response): Promise<void> {
   const { name } = req.params as { name: string };
   try {
-    await dockerService.startStack(name);
+    const containers = await dockerService.listContainers();
+    const stackContainers = containers.filter((c) => c.stackName === name);
+
+    if (stackContainers.length === 0) {
+      // Frischer Stack — noch keine Container → docker compose up -d
+      await composeService.composeUpStack(name);
+    } else {
+      // Stack bereits bekannt — gestoppte Container starten
+      await dockerService.startStack(name);
+    }
     res.json({ data: null, message: `Stack ${name} gestartet` });
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode;
