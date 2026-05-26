@@ -31,6 +31,11 @@ services:
       # Seed-Variablen — nur für einmalige DB-Initialisierung benötigt
       - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-}
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}
+    volumes:
+      # Docker Socket — für Container-Management (docker ps, logs, start/stop)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Stacks-Verzeichnis — für Compose-Editor (lesen + schreiben)
+      - /opt/stacks:/opt/stacks
     networks:
       - ws2k
     depends_on:
