@@ -14,7 +14,7 @@ RUN cd apps/backend && npm install
 
 # Copy TypeScript source files
 COPY apps/backend/src/        ./apps/backend/src/
-COPY apps/backend/tsconfig.json ./apps/backend/tsconfig.json
+COPY apps/backend/tsconfig*.json ./apps/backend/
 COPY packages/shared/src/     ./packages/shared/src/
 
 # Compile TypeScript → dist/  (tsc-alias rewrites path aliases to relative paths)
