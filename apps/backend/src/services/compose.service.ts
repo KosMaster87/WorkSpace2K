@@ -17,6 +17,62 @@ import * as dockerService from './docker.service';
 const execAsync = promisify(exec);
 
 /**
+ * Maximale Wartezeit auf schnelle Fehler (Konfigurationsfehler, fehlendes Netzwerk).
+ * Danach wird Fire-and-Forget aktiviert — der Prozess läuft im Hintergrund weiter.
+ * @private
+ */
+const FAST_FAIL_MS = 8_000;
+
+/**
+ * Führt einen docker compose Befehl aus — Fast-Fail oder Fire-and-Forget.
+ * @description Wartet maximal FAST_FAIL_MS auf das Ergebnis.
+ *   - Endet der Prozess vorher (Fehler oder schneller Erfolg) → Ergebnis zurückgeben.
+ *   - Läuft er noch (Image-Pull bei großen Images wie GitLab, Matrix) →
+ *     null zurückgeben. Der Prozess läuft im Hintergrund weiter, Fehler werden
+ *     in die Backend-Logs geschrieben (docker logs ws2k-backend).
+ * @param {string} command - Auszuführender docker compose Befehl.
+ * @param {string} cwd - Arbeitsverzeichnis (Stack-Pfad).
+ * @returns {Promise<{ stdout: string; stderr: string } | null>}
+ *   Ausgabe bei schnellem Abschluss, null wenn im Hintergrund.
+ * @private
+ */
+async function execComposeBackground(
+  command: string,
+  cwd: string,
+): Promise<{ stdout: string; stderr: string } | null> {
+  const proc = execAsync(command, {
+    cwd,
+    timeout: 10 * 60 * 1000, // 10 Minuten — genug für große Images
+    env: { ...process.env, COMPOSE_ANSI: 'never' },
+  });
+
+  let done = false;
+  let result: { stdout: string; stderr: string } | null = null;
+  let caughtError: Error | null = null;
+
+  const settled = proc
+    .then((r) => {
+      done = true;
+      result = r;
+    })
+    .catch((e: Error) => {
+      done = true;
+      caughtError = e;
+    });
+
+  await Promise.race([settled, new Promise<void>((resolve) => setTimeout(resolve, FAST_FAIL_MS))]);
+
+  if (!done) {
+    // Noch nicht fertig (Image-Pull) — Fire-and-Forget, Fehler in Backend-Logs
+    proc.catch((e: Error) => console.error(`[compose] background error: ${e.message}`));
+    return null;
+  }
+
+  if (caughtError) throw caughtError;
+  return result;
+}
+
+/**
  * Bekannte Compose-Dateinamen — in dieser Reihenfolge geprüft.
  * @private
  */
@@ -154,25 +210,27 @@ export async function findStackPath(name: string): Promise<string> {
  * @description Führt im Stack-Verzeichnis aus:
  *   1. `docker compose pull` — lädt neue Images vom Registry
  *   2. `docker compose up -d` — startet Container mit neuen Images neu
- *   Gibt stdout+stderr der Befehle zurück.
- *   Timeout: 5 Minuten (für große Images ausreichend).
+ *   Verwendet Fast-Fail/Fire-and-Forget: bei großen Images (GitLab, Matrix)
+ *   läuft der Pull im Hintergrund weiter und der Request wird sofort beantwortet.
+ *   Fehler werden in docker logs ws2k-backend geschrieben.
  * @async
  * @function updateStack
  * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
- * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe der Befehle.
+ * @returns {Promise<StackUpdateResult>} Name und Ausgabe oder Hinweis auf Hintergrundprozess.
  * @throws {Error} statusCode 404 wenn Compose-File nicht gefunden.
- * @throws {Error} Wenn docker compose fehlschlägt.
+ * @throws {Error} Wenn docker compose sofort fehlschlägt (Konfigurationsfehler).
  */
 export async function updateStack(name: string): Promise<StackUpdateResult> {
   const stackPath = await findStackPath(name);
-
-  const { stdout, stderr } = await execAsync('docker compose pull && docker compose up -d', {
-    cwd: stackPath,
-    timeout: 5 * 60 * 1000, // 5 Minuten
-    env: { ...process.env, COMPOSE_ANSI: 'never' }, // Keine ANSI-Escape-Codes in Output
-  });
-
-  return { name, output: [stdout, stderr].filter(Boolean).join('\n') };
+  const result = await execComposeBackground(
+    'docker compose pull && docker compose up -d',
+    stackPath,
+  );
+  const output =
+    result !== null
+      ? [result.stdout, result.stderr].filter(Boolean).join('\n')
+      : 'Update läuft im Hintergrund (Image-Pull) — Container werden nach Abschluss neu gestartet.';
+  return { name, output };
 }
 
 /**
@@ -199,22 +257,24 @@ export async function getComposeContent(name: string): Promise<string> {
  * @description Führt `docker compose up -d` im Stack-Verzeichnis aus — startet
  *   Container aus vorhandenen oder zu bauenden Images. Geeignet für frische Stacks
  *   die noch nie deployed wurden (keine Container vorhanden).
- *   Timeout: 5 Minuten.
+ *   Verwendet Fast-Fail/Fire-and-Forget: bei großen Images (GitLab, Matrix)
+ *   läuft der Pull im Hintergrund weiter und der Request wird sofort beantwortet.
+ *   Fehler werden in docker logs ws2k-backend geschrieben.
  * @async
  * @function composeUpStack
  * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
- * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe.
+ * @returns {Promise<StackUpdateResult>} Name und Ausgabe oder Hinweis auf Hintergrundprozess.
  * @throws {Error} statusCode 404 wenn Stack nicht gefunden.
- * @throws {Error} Wenn docker compose fehlschlägt.
+ * @throws {Error} Wenn docker compose sofort fehlschlägt (Konfigurationsfehler).
  */
 export async function composeUpStack(name: string): Promise<StackUpdateResult> {
   const stackPath = await findStackPath(name);
-  const { stdout, stderr } = await execAsync('docker compose up -d', {
-    cwd: stackPath,
-    timeout: 5 * 60 * 1000,
-    env: { ...process.env, COMPOSE_ANSI: 'never' },
-  });
-  return { name, output: [stdout, stderr].filter(Boolean).join('\n') };
+  const result = await execComposeBackground('docker compose up -d', stackPath);
+  const output =
+    result !== null
+      ? [result.stdout, result.stderr].filter(Boolean).join('\n')
+      : 'Stack wird gestartet — Image-Pull läuft im Hintergrund.\nDie Container erscheinen in der Liste sobald sie bereit sind.';
+  return { name, output };
 }
 
 /**
