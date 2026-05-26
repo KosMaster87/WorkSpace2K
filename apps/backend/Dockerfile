@@ -20,6 +20,10 @@ COPY packages/shared/src/     ./packages/shared/src/
 # Compile TypeScript → dist/  (tsc-alias rewrites path aliases to relative paths)
 RUN cd apps/backend && npm run build
 
+# Seed-Script kompilieren → dist-seed/prisma/seed.js
+# (tsconfig.seed.json: rootDir ".", outDir "dist-seed", inkludiert prisma/**)
+RUN cd apps/backend && npx tsc --project tsconfig.seed.json
+
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM node:24-alpine AS runtime
 
@@ -33,6 +37,9 @@ RUN apk add --no-cache openssl
 
 # Copy compiled JavaScript output
 COPY --from=builder /build/apps/backend/dist/ ./dist/
+
+# Kompiliertes Seed-Script kopieren (für einmalige DB-Initialisierung)
+COPY --from=builder /build/apps/backend/dist-seed/ ./dist-seed/
 
 # Copy package files and prisma schema for production install
 COPY apps/backend/package*.json ./
