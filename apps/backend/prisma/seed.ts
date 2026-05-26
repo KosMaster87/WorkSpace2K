@@ -89,10 +89,10 @@ async function seedDestinations(): Promise<void> {
     },
     {
       name: 'WinBoat',
-      url: 'https://winboat.dev2ksoftware.com',
-      icon: '🪟',
+      url: 'https://winboat.app',
+      icon: '⛵',
       category: 'Produktivität',
-      description: 'Windows-VM in Docker (dockur/windows) — noVNC + RDP',
+      description: 'Web-basierter Windows-Emulator — läuft direkt im Browser (TibixDev)',
       sortOrder: 1,
     },
     // ── Automation ───────────────────────────────────────────────────────────

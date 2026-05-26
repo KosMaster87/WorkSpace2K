@@ -56,7 +56,7 @@ Mehrere Einträge pro Stack werden unterstützt (Beispiel Matrix):
 | matrix          | element    | element          | 80   | ✅         |
 | obsidian-live…  | obsidian   | obsidian-couchdb | 5984 | ❌         |
 
-`winboat` hat keine `ws2k.json` — exponiert Ports direkt, braucht kein NPM.
+`winboat` hat keine `ws2k.json` — WinBoat ist eine externe Web-App (`https://winboat.app`), kein self-hosted Stack.
 
 ---
 
