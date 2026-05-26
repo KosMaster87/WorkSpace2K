@@ -1,7 +1,7 @@
 services:
   frontend:
     build:
-      context: ..
+      context: .
       dockerfile: apps/frontend/Dockerfile
     container_name: ws2k-frontend
     restart: unless-stopped
@@ -18,7 +18,7 @@ services:
 
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: apps/backend/Dockerfile
     container_name: ws2k-backend
     restart: unless-stopped

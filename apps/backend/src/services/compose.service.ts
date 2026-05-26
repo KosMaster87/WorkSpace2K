@@ -4,13 +4,11 @@
  *   und führt docker compose Befehle aus. Ergänzt den docker.service.ts, der nur die
  *   Docker API nutzt — hier wird die docker compose CLI direkt aufgerufen.
  *   Voraussetzung: docker compose (v2) muss auf dem Server installiert sein.
- *   Symlinks auf Verzeichnisse werden verfolgt — so können externe Stacks (z.B.
- *   /opt/workspace2k/docker → /opt/stacks/workspace2k) eingebunden werden.
  * @module ComposeService
  */
 
 import { exec } from 'child_process';
-import { access, mkdir, readdir, readFile, stat, writeFile } from 'fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import { ComposeStack, ServiceStatus, StackUpdateResult } from '@workspace2k/shared';
@@ -90,8 +88,6 @@ async function resolveStackStatus(name: string): Promise<ServiceStatus> {
  * @description Durchsucht DOCKER_STACKS_PATH nach Unterverzeichnissen mit Compose-Files.
  *   Gibt leeres Array zurück wenn das Verzeichnis nicht existiert (graceful degradation).
  *   Status wird durch Abgleich mit Docker API ermittelt.
- *   Symlinks auf Verzeichnisse werden verfolgt — z.B.:
- *   ln -s /opt/workspace2k/docker /opt/stacks/workspace2k
  * @async
  * @function scanStacks
  * @returns {Promise<ComposeStack[]>} Liste aller gefundenen Compose-Stacks.
@@ -102,21 +98,7 @@ export async function scanStacks(): Promise<ComposeStack[]> {
   if (!(await exists(basePath))) return [];
 
   const entries = await readdir(basePath, { withFileTypes: true });
-
-  // Echte Verzeichnisse + Symlinks auf Verzeichnisse einschließen
-  const dirs: typeof entries = [];
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      dirs.push(entry);
-    } else if (entry.isSymbolicLink()) {
-      try {
-        const resolved = await stat(path.join(basePath, entry.name));
-        if (resolved.isDirectory()) dirs.push(entry);
-      } catch {
-        // Kaputter Symlink — überspringen
-      }
-    }
-  }
+  const dirs = entries.filter((e) => e.isDirectory());
 
   const results: ComposeStack[] = [];
 
