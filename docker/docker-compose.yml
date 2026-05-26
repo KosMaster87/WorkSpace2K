@@ -6,7 +6,11 @@ services:
     container_name: ws2k-frontend
     restart: unless-stopped
     ports:
-      - '80:80'
+      # Port 4200 (Host) → 80 (Container-nginx)
+      # Nicht 80:80 — Port 80 wird vom Reverse Proxy (nginx-proxy-manager) belegt.
+      # NPM leitet workspace2k.dev2ksoftware.com → localhost:4200 weiter.
+      # Lokale Entwicklung: ng serve (nicht diese Datei) → Port 4200 direkt.
+      - '4200:80'
     networks:
       - ws2k
     depends_on:
