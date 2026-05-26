@@ -155,24 +155,30 @@ async function createProxyHost(
   certId: number | null,
 ): Promise<void> {
   const url = `${process.env['NPM_URL']}/api/nginx/proxy-hosts`;
+  // NPM API v2 erwartet Zahlen (0/1) statt Booleans und benötigt mehrere Pflichtfelder.
   const body = {
     domain_names: [fqdn],
     forward_scheme: 'http',
     forward_host: forwardHost,
     forward_port: forwardPort,
+    // Pflichtfelder — NPM lehnt 400 ab wenn diese fehlen
+    access_list_id: '0',
+    advanced_config: '',
+    locations: [],
+    caching_enabled: 0,
     // Force SSL deaktiviert — Cloudflare Tunnel leitet HTTP intern weiter,
     // Force SSL würde einen Redirect-Loop erzeugen.
     ssl_forced: 0,
     certificate_id: certId ?? 0,
-    meta: { letsencrypt_agree: true, dns_challenge: false },
-    block_exploits: true,
-    websocket_support: websockets,
-    allow_websocket_upgrade: websockets,
-    http2_support: false,
+    meta: { letsencrypt_agree: false, dns_challenge: false },
+    // NPM v2: Booleans als 0/1 — true/false wird teils als ungültig abgewiesen
+    block_exploits: 1,
+    allow_websocket_upgrade: websockets ? 1 : 0,
+    http2_support: 0,
     // HSTS deaktiviert — NPM-Einschränkung: HSTS erfordert Force SSL.
     // Cloudflare erzwingt HTTPS bereits auf Browser-Ebene.
-    hsts_enabled: false,
-    hsts_subdomains: false,
+    hsts_enabled: 0,
+    hsts_subdomains: 0,
   };
 
   const doRequest = async (authToken: string): Promise<Response> =>
@@ -193,7 +199,10 @@ async function createProxyHost(
   }
 
   if (!res.ok) {
-    throw new Error(`NPM Proxy Host erstellen fehlgeschlagen: HTTP ${res.status} für ${fqdn}`);
+    const detail = await res.text().catch(() => '');
+    throw new Error(
+      `NPM Proxy Host erstellen fehlgeschlagen: HTTP ${res.status} für ${fqdn}${detail ? ` — ${detail}` : ''}`,
+    );
   }
 
   console.log(`[npm] Proxy Host erstellt: ${fqdn} → ${forwardHost}:${forwardPort}`);
