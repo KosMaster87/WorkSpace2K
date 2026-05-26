@@ -21,7 +21,13 @@ import {
   selectStacksLoading,
   selectStoppedCount,
 } from './docker.selectors';
-import { ComposeStack, ContainerStats, DockerService, DockerStack, DockerState } from './docker.state';
+import {
+  ComposeStack,
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  DockerState,
+} from './docker.state';
 
 const running: DockerService = {
   id: 'c1',
@@ -227,7 +233,9 @@ describe('Docker Selectors', () => {
     });
 
     it('should return updating stack names', () => {
-      expect(selectStackUpdatingNames(buildState({ stackUpdatingNames: ['n8n'] }))).toEqual(['n8n']);
+      expect(selectStackUpdatingNames(buildState({ stackUpdatingNames: ['n8n'] }))).toEqual([
+        'n8n',
+      ]);
     });
   });
 
