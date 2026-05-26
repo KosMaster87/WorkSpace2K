@@ -70,11 +70,15 @@ openssl rand -hex 16   # DB_PASSWORD
 
 ## NPM Proxy Host
 
+> **Port-Hinweis:** Der Frontend-Container mappt Host-Port `4200` → Container-Port `80`.
+> NPM muss daher auf Port `4200` weiterleiten, nicht `80`.
+> Hintergrund: Port `80` auf dem Host ist durch NPM selbst belegt.
+
 | Feld             | Wert                    |
 | ---------------- | ----------------------- |
 | Domain Frontend  | `workspace.dev2k.space` |
-| Forward Hostname | `ws2k-frontend`         |
-| Forward Port     | `80`                    |
+| Forward Hostname | `localhost`             |
+| Forward Port     | `4200`                  |
 | SSL              | Let's Encrypt ✅        |
 
 | Feld             | Wert              |
