@@ -26,6 +26,11 @@ FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
+# OpenSSL 3.x für Prisma Query Engine (linux-musl-openssl-3.0.x)
+# node:24-alpine basiert auf Alpine 3.20+ mit OpenSSL 3.x — explizit installieren
+# damit libssl.so.3 für den Prisma-Binary verfügbar ist
+RUN apk add --no-cache openssl
+
 # Copy compiled JavaScript output
 COPY --from=builder /build/apps/backend/dist/ ./dist/
 
@@ -33,8 +38,15 @@ COPY --from=builder /build/apps/backend/dist/ ./dist/
 COPY apps/backend/package*.json ./
 COPY apps/backend/prisma/ ./prisma/
 
-# Install production dependencies only (postinstall regenerates prisma client)
+# Install production dependencies only
+# Hinweis: --omit=dev überspringt die prisma CLI → prisma generate läuft nicht neu.
+# Daher wird der bereits generierte Client aus dem Builder-Stage kopiert (nächster Schritt).
 RUN npm install --omit=dev
+
+# Vorgenerierter Prisma-Client aus Builder-Stage kopieren.
+# Builder hat prisma generate mit binaryTargets ["native", "linux-musl-openssl-3.0.x"]
+# ausgeführt — dieser Binary läuft auf Alpine + OpenSSL 3.x.
+COPY --from=builder /build/apps/backend/node_modules/.prisma/ ./node_modules/.prisma/
 
 EXPOSE 3000
 
