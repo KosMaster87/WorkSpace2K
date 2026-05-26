@@ -19,6 +19,7 @@
  */
 
 import { Router } from 'express';
+import * as composeController from '../controllers/compose.controller';
 import * as dockerController from '../controllers/docker.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -76,6 +77,13 @@ dockerRouter.get('/containers/:id/logs/stream', dockerController.streamContainer
 dockerRouter.get('/stacks', dockerController.getStacks);
 
 /**
+ * GET /api/docker/stacks/scan
+ * Scannt DOCKER_STACKS_PATH nach Verzeichnissen mit Compose-Files.
+ * Muss VOR /stacks/:name/* registriert sein um Namenskonflikt zu vermeiden.
+ */
+dockerRouter.get('/stacks/scan', composeController.scanStacks);
+
+/**
  * POST /api/docker/stacks/:name/start
  * Startet alle gestoppten Container des angegebenen Stacks.
  */
@@ -86,3 +94,15 @@ dockerRouter.post('/stacks/:name/start', dockerController.startStack);
  * Stoppt alle laufenden Container des angegebenen Stacks.
  */
 dockerRouter.post('/stacks/:name/stop', dockerController.stopStack);
+
+/**
+ * POST /api/docker/stacks/:name/update
+ * Aktualisiert einen Stack via docker compose pull && up -d.
+ */
+dockerRouter.post('/stacks/:name/update', composeController.updateStack);
+
+/**
+ * GET /api/docker/stacks/:name/compose
+ * Gibt den YAML-Inhalt der Compose-Datei eines Stacks zurück.
+ */
+dockerRouter.get('/stacks/:name/compose', composeController.getComposeContent);

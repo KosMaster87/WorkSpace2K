@@ -8,7 +8,13 @@
 
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared';
+import {
+  ComposeStack,
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  StackUpdateResult,
+} from '@workspace2k/shared';
 import { EMPTY, catchError, map, mergeMap, of, switchMap } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
 import { DockerActions } from './docker.actions';
@@ -229,6 +235,55 @@ export const stopStackEffect = createEffect(
           catchError((err: unknown) => {
             const error = err instanceof Error ? err.message : 'Stack konnte nicht gestoppt werden';
             return of(DockerActions.stopStackFailure({ name, error }));
+          }),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/**
+ * Aktualisiert einen Stack via docker compose pull + up -d.
+ * @description Dauert bis zu mehreren Minuten (Image-Download). Nach Success:
+ *   Container und Stacks werden neu geladen damit der UI-Stand aktuell ist.
+ * @returns {Observable<Action>} updateStackSuccess + loadContainers, oder updateStackFailure.
+ */
+export const updateStackEffect = createEffect(
+  (actions$ = inject(Actions), containerService = inject(ContainerService)) =>
+    actions$.pipe(
+      ofType(DockerActions.updateStack),
+      switchMap(({ name }: { name: string }) =>
+        containerService.updateStack(name).pipe(
+          mergeMap((result: StackUpdateResult) => [
+            DockerActions.updateStackSuccess({ name, result }),
+            DockerActions.loadContainers(), // Neu laden damit aktueller Stand sichtbar ist
+          ]),
+          catchError((err: unknown) => {
+            const error = err instanceof Error ? err.message : 'Stack-Update fehlgeschlagen';
+            return of(DockerActions.updateStackFailure({ name, error }));
+          }),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+/**
+ * Scannt das Stacks-Verzeichnis nach Compose-Files.
+ * @returns {Observable<Action>} scanComposeStacksSuccess oder scanComposeStacksFailure.
+ */
+export const scanComposeStacksEffect = createEffect(
+  (actions$ = inject(Actions), containerService = inject(ContainerService)) =>
+    actions$.pipe(
+      ofType(DockerActions.scanComposeStacks),
+      switchMap(() =>
+        containerService.scanComposeStacks().pipe(
+          map((composeStacks: ComposeStack[]) =>
+            DockerActions.scanComposeStacksSuccess({ composeStacks }),
+          ),
+          catchError((err: unknown) => {
+            const error = err instanceof Error ? err.message : 'Filesystem-Scan fehlgeschlagen';
+            return of(DockerActions.scanComposeStacksFailure({ error }));
           }),
         ),
       ),

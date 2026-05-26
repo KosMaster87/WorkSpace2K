@@ -7,7 +7,13 @@
  */
 
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared';
+import {
+  ComposeStack,
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  StackUpdateResult,
+} from '@workspace2k/shared';
 
 /**
  * Docker Action Group — alle Container-Management-Actions.
@@ -63,5 +69,15 @@ export const DockerActions = createActionGroup({
     'Stop Stack': props<{ name: string }>(),
     'Stop Stack Success': props<{ name: string }>(),
     'Stop Stack Failure': props<{ name: string; error: string }>(),
+
+    // ── Stack updaten (docker compose pull + up -d) ────────────────────────
+    'Update Stack': props<{ name: string }>(),
+    'Update Stack Success': props<{ name: string; result: StackUpdateResult }>(),
+    'Update Stack Failure': props<{ name: string; error: string }>(),
+
+    // ── Compose-Stacks scannen (Filesystem-Scan) ──────────────────────────
+    'Scan Compose Stacks': emptyProps(),
+    'Scan Compose Stacks Success': props<{ composeStacks: ComposeStack[] }>(),
+    'Scan Compose Stacks Failure': props<{ error: string }>(),
   },
 });

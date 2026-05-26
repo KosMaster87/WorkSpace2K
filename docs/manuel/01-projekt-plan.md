@@ -131,10 +131,10 @@ WorkSpace2K Backend (Express + TypeScript)
 
 ### Docker — Roadmap (Phasen 3–4)
 
-- [ ] **Phase 3** — Filesystem-Scan für `/opt/stacks/`
-- [ ] **Phase 3** — Compose-File-Editor (Stack deployen/bearbeiten)
-- [ ] **Phase 3** — Stack updaten (pull + redeploy)
-- [ ] **Phase 3** — Live-Logs via WebSocket/SSE
+- [x] **Phase 3a** — Live-Logs via SSE (fetch + ReadableStream, Docker-Demux)
+- [x] **Phase 3b** — Filesystem-Scan für `/opt/stacks/` (`GET /api/docker/stacks/scan`)
+- [x] **Phase 3b** — Stack updaten via `docker compose pull && up -d` (`POST /api/docker/stacks/:name/update`)
+- [ ] **Phase 3c** — Compose-File-Editor (Stack deployen/bearbeiten)
 - [ ] **Phase 4** — Multi-Host Docker-Management (remote via Agent)
 - [ ] **Phase 4** — Template-System (häufige Services per Klick deployen)
 
