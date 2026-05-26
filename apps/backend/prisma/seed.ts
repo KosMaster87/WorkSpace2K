@@ -88,11 +88,11 @@ async function seedDestinations(): Promise<void> {
       sortOrder: 0,
     },
     {
-      name: 'Winboard',
-      url: 'https://winboard.dev2ksoftware.com',
-      icon: '📋',
+      name: 'WinBoat',
+      url: 'https://winboat.dev2ksoftware.com',
+      icon: '🪟',
       category: 'Produktivität',
-      description: 'Kanban-Board',
+      description: 'Windows-VM in Docker (dockur/windows) — noVNC + RDP',
       sortOrder: 1,
     },
     // ── Automation ───────────────────────────────────────────────────────────
