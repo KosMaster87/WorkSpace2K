@@ -6,6 +6,8 @@
  *   Dispatcht loadContainers beim Init — Stacks werden automatisch danach geladen (Effect).
  *   Live-Logs: SSE-Stream via ContainerService.streamContainerLogs() — kein NgRx Store,
  *   da Streaming-Daten lokal in Signals gehalten werden.
+ *   Compose-Editor: lokaler Signal-State (kein NgRx) — öffnet sich als Modal-Overlay.
+ *   Zwei Modi: 'create' (neuer Stack) und 'edit' (vorhandene Compose-Datei bearbeiten).
  * @module ServicesComponent
  */
 
@@ -75,6 +77,34 @@ export class ServicesComponent implements OnInit {
 
   /** Signal: Compose-Stacks aus dem Filesystem-Scan. */
   readonly composeStacks = this.store.selectSignal(selectComposeStacks);
+
+  // ── Compose-Editor State ────────────────────────────────────────────────────
+
+  /** true = Editor-Overlay ist sichtbar. */
+  readonly editorOpen = signal(false);
+
+  /** 'create' = neuer Stack, 'edit' = vorhandene Compose-Datei bearbeiten. */
+  readonly editorMode = signal<'create' | 'edit'>('create');
+
+  /** Stack-Name im Editor (readonly in edit-Modus, editierbar in create-Modus). */
+  readonly editorStackName = signal('');
+
+  /** YAML-Inhalt im Editor-Textarea. */
+  readonly editorContent = signal('');
+
+  /** true während der Compose-Datei-Inhalt vom Server geladen wird (edit-Modus). */
+  readonly editorLoading = signal(false);
+
+  /** true während des Deployments (PUT oder POST request läuft). */
+  readonly editorSaving = signal(false);
+
+  /** Fehlermeldung im Editor oder null. */
+  readonly editorError = signal<string | null>(null);
+
+  /** Ausgabe (stdout/stderr) nach erfolgreichem Deploy oder null. */
+  readonly deployOutput = signal<string | null>(null);
+
+  // ── Live-Log State ──────────────────────────────────────────────────────────
 
   /**
    * Live-Log-Zeilen pro Container-ID.
@@ -296,6 +326,114 @@ export class ServicesComponent implements OnInit {
   onUpdateStack(name: string): void {
     this.store.dispatch(DockerActions.updateStack({ name }));
   }
+
+  // ── Compose-Editor Methoden ─────────────────────────────────────────────────
+
+  /**
+   * Öffnet den Editor im Create-Modus (neuer Stack).
+   * @description Setzt alle Editor-Felder zurück auf Standardwerte.
+   * @returns {void}
+   */
+  openCreateEditor(): void {
+    this.editorMode.set('create');
+    this.editorStackName.set('');
+    this.editorContent.set('');
+    this.editorError.set(null);
+    this.deployOutput.set(null);
+    this.editorLoading.set(false);
+    this.editorSaving.set(false);
+    this.editorOpen.set(true);
+  }
+
+  /**
+   * Öffnet den Editor im Edit-Modus und lädt die Compose-Datei des Stacks.
+   * @description Lädt den YAML-Inhalt der Compose-Datei vom Server.
+   *   Zeigt editorLoading während des Ladens.
+   * @param {string} name - Stack-Name.
+   * @returns {void}
+   */
+  openEditEditor(name: string): void {
+    this.editorMode.set('edit');
+    this.editorStackName.set(name);
+    this.editorContent.set('');
+    this.editorError.set(null);
+    this.deployOutput.set(null);
+    this.editorLoading.set(true);
+    this.editorSaving.set(false);
+    this.editorOpen.set(true);
+
+    this.containerService
+      .getComposeContent(name)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (content) => {
+          this.editorContent.set(content);
+          this.editorLoading.set(false);
+        },
+        error: (err: unknown) => {
+          const msg =
+            err instanceof Error ? err.message : 'Compose-Datei konnte nicht geladen werden';
+          this.editorError.set(msg);
+          this.editorLoading.set(false);
+        },
+      });
+  }
+
+  /**
+   * Schließt den Editor und setzt alle Felder zurück.
+   * @returns {void}
+   */
+  closeEditor(): void {
+    this.editorOpen.set(false);
+    this.editorError.set(null);
+    this.deployOutput.set(null);
+  }
+
+  /**
+   * Speichert und deployed den Stack (create oder edit).
+   * @description Create-Modus: POST /api/docker/stacks (neues Verzeichnis + up -d).
+   *   Edit-Modus: PUT /api/docker/stacks/:name/compose (Datei überschreiben + up -d).
+   *   Nach erfolgreichem Deploy: Container und Stacks im Store neu laden.
+   * @returns {void}
+   */
+  onDeploy(): void {
+    const name = this.editorStackName().trim();
+    const content = this.editorContent();
+    if (!name) {
+      this.editorError.set('Stack-Name ist erforderlich.');
+      return;
+    }
+    if (!content.trim()) {
+      this.editorError.set('Compose-Inhalt ist erforderlich.');
+      return;
+    }
+
+    this.editorSaving.set(true);
+    this.editorError.set(null);
+    this.deployOutput.set(null);
+
+    const request$ =
+      this.editorMode() === 'create'
+        ? this.containerService.createStack(name, content)
+        : this.containerService.saveAndDeployStack(name, content);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.deployOutput.set(result.output || '✓ Erfolgreich deployed.');
+        this.editorSaving.set(false);
+        // Nach erfolgreichem Deploy Container und Stacks neu laden
+        this.store.dispatch(DockerActions.loadContainers());
+        this.store.dispatch(DockerActions.scanComposeStacks());
+      },
+      error: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Deploy fehlgeschlagen';
+        this.editorError.set(msg);
+        this.editorSaving.set(false);
+      },
+    });
+  }
+
+  // ── Stack-Aktionen ──────────────────────────────────────────────────────────
 
   /**
    * Startet alle Container eines Stacks.

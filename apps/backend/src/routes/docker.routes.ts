@@ -5,16 +5,21 @@
  *   Wird in index.ts unter /api/docker eingehängt.
  *
  *   Endpunkte:
- *     GET    /api/docker/containers              → Container-Liste
- *     GET    /api/docker/containers/:id/stats    → CPU, RAM, Uptime eines Containers
- *     GET    /api/docker/containers/:id/logs        → Letzte Log-Zeilen (tail=100)
- *     GET    /api/docker/containers/:id/logs/stream → Live-Log-Stream (SSE, follow=true)
- *     POST   /api/docker/containers/:id/start    → Container starten
- *     POST   /api/docker/containers/:id/stop     → Container stoppen
- *     DELETE /api/docker/containers/:id          → Container löschen (muss gestoppt sein)
- *     GET    /api/docker/stacks                  → Container nach Compose-Projekt gruppiert
- *     POST   /api/docker/stacks/:name/start      → Alle Container eines Stacks starten
- *     POST   /api/docker/stacks/:name/stop       → Alle Container eines Stacks stoppen
+ *     GET    /api/docker/containers                  → Container-Liste
+ *     GET    /api/docker/containers/:id/stats        → CPU, RAM, Uptime eines Containers
+ *     GET    /api/docker/containers/:id/logs         → Letzte Log-Zeilen (tail=100)
+ *     GET    /api/docker/containers/:id/logs/stream  → Live-Log-Stream (SSE, follow=true)
+ *     POST   /api/docker/containers/:id/start        → Container starten
+ *     POST   /api/docker/containers/:id/stop         → Container stoppen
+ *     DELETE /api/docker/containers/:id              → Container löschen (muss gestoppt sein)
+ *     GET    /api/docker/stacks                      → Container nach Compose-Projekt gruppiert
+ *     GET    /api/docker/stacks/scan                 → Filesystem-Scan (Compose-Dateien)
+ *     POST   /api/docker/stacks                      → Neuen Stack erstellen + deployen
+ *     POST   /api/docker/stacks/:name/start          → Alle Container eines Stacks starten
+ *     POST   /api/docker/stacks/:name/stop           → Alle Container eines Stacks stoppen
+ *     POST   /api/docker/stacks/:name/update         → docker compose pull && up -d
+ *     GET    /api/docker/stacks/:name/compose        → Compose-Datei-Inhalt lesen
+ *     PUT    /api/docker/stacks/:name/compose        → Compose-Datei speichern + deployen
  * @module DockerRoutes
  */
 
@@ -84,6 +89,13 @@ dockerRouter.get('/stacks', dockerController.getStacks);
 dockerRouter.get('/stacks/scan', composeController.scanStacks);
 
 /**
+ * POST /api/docker/stacks
+ * Erstellt einen neuen Stack (Verzeichnis + compose.yaml + docker compose up -d).
+ * Muss VOR den /:name-Routen stehen (kein Konflikt, aber klare Reihenfolge).
+ */
+dockerRouter.post('/stacks', composeController.createStack);
+
+/**
  * POST /api/docker/stacks/:name/start
  * Startet alle gestoppten Container des angegebenen Stacks.
  */
@@ -106,3 +118,10 @@ dockerRouter.post('/stacks/:name/update', composeController.updateStack);
  * Gibt den YAML-Inhalt der Compose-Datei eines Stacks zurück.
  */
 dockerRouter.get('/stacks/:name/compose', composeController.getComposeContent);
+
+/**
+ * PUT /api/docker/stacks/:name/compose
+ * Speichert den Compose-Datei-Inhalt und deployed den Stack via docker compose up -d.
+ * Body: { content: string }
+ */
+dockerRouter.put('/stacks/:name/compose', composeController.saveAndDeployStack);

@@ -4,6 +4,11 @@
       <h2>Services</h2>
       <p class="services__subtitle">Docker-Container verwalten</p>
     </div>
+    @if (appStore.dockerView() === 'stacks' && !stacksLoading()) {
+      <button class="btn btn--compose-new" (click)="openCreateEditor()" title="Neuen Stack erstellen">
+        + Neuer Stack
+      </button>
+    }
   </header>
 
   @if (isLoading()) {
@@ -86,6 +91,14 @@
                         } @else {
                           ↓ Update
                         }
+                      </button>
+                      <button
+                        class="btn btn--edit"
+                        [disabled]="isStackUpdating(stack.name) || isStackPending(stack.name)"
+                        (click)="openEditEditor(stack.name)"
+                        title="Compose-Datei bearbeiten und deployen"
+                      >
+                        ✎ Compose
                       </button>
                     }
                   }
@@ -314,5 +327,95 @@
         </div>
       }
     }
+  }
+
+  <!-- ── Compose-Editor Overlay ──────────────────────────────────────────────── -->
+  @if (editorOpen()) {
+    <div class="compose-editor">
+      <div class="compose-editor__backdrop" (click)="closeEditor()"></div>
+      <div class="compose-editor__panel" role="dialog" aria-modal="true">
+        <!-- Header -->
+        <div class="compose-editor__header">
+          <span class="compose-editor__title">
+            @if (editorMode() === 'create') {
+              + Neuer Stack
+            } @else {
+              ✎ Compose — {{ editorStackName() }}
+            }
+          </span>
+          <button class="compose-editor__close" (click)="closeEditor()" title="Schließen">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="compose-editor__body">
+          <!-- Stack-Name (nur im Create-Modus editierbar) -->
+          @if (editorMode() === 'create') {
+            <div class="compose-editor__field">
+              <label class="compose-editor__label" for="editor-name">Stack-Name</label>
+              <input
+                id="editor-name"
+                class="compose-editor__input"
+                type="text"
+                placeholder="z.B. uptime-kuma"
+                [value]="editorStackName()"
+                (input)="editorStackName.set($any($event.target).value)"
+                [disabled]="editorSaving()"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="compose-editor__hint">Nur a–z, 0–9, - und _ erlaubt.</span>
+            </div>
+          }
+
+          <!-- Textarea für YAML -->
+          <div class="compose-editor__field compose-editor__field--grow">
+            <label class="compose-editor__label" for="editor-content">compose.yaml</label>
+            @if (editorLoading()) {
+              <div class="compose-editor__loading">
+                <span class="btn__spinner"></span>
+                <span>Compose-Datei wird geladen…</span>
+              </div>
+            } @else {
+              <textarea
+                id="editor-content"
+                class="compose-editor__textarea"
+                placeholder='services:&#10;  my-service:&#10;    image: nginx:latest&#10;    ports:&#10;      - "8080:80"'
+                [value]="editorContent()"
+                (input)="editorContent.set($any($event.target).value)"
+                [disabled]="editorSaving()"
+                spellcheck="false"
+                autocomplete="off"
+              ></textarea>
+            }
+          </div>
+        </div>
+
+        <!-- Footer: Fehler + Buttons -->
+        <div class="compose-editor__footer">
+          @if (editorError()) {
+            <span class="compose-editor__error">⚠ {{ editorError() }}</span>
+          }
+          <div class="compose-editor__actions">
+            <button class="btn btn--cancel" (click)="closeEditor()" [disabled]="editorSaving()">Abbrechen</button>
+            <button class="btn btn--deploy" (click)="onDeploy()" [disabled]="editorSaving() || editorLoading()">
+              @if (editorSaving()) {
+                <span class="btn__spinner"></span>
+                <span>Deploying…</span>
+              } @else {
+                ▶ Deploy
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Output nach Deploy -->
+        @if (deployOutput()) {
+          <div class="compose-editor__output">
+            <div class="compose-editor__output-title">Output</div>
+            <pre class="log-output">{{ deployOutput() }}</pre>
+          </div>
+        }
+      </div>
+    </div>
   }
 </div>
