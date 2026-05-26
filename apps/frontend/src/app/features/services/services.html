@@ -50,7 +50,7 @@
                     @if (stack.status !== 'running') {
                       <button
                         class="btn btn--start"
-                        [disabled]="isStackPending(stack.name)"
+                        [disabled]="isStackPending(stack.name) || isStackUpdating(stack.name)"
                         (click)="onStartStack(stack.name)"
                       >
                         @if (isStackPending(stack.name)) {
@@ -63,13 +63,28 @@
                     @if (stack.status !== 'stopped') {
                       <button
                         class="btn btn--stop"
-                        [disabled]="isStackPending(stack.name)"
+                        [disabled]="isStackPending(stack.name) || isStackUpdating(stack.name)"
                         (click)="onStopStack(stack.name)"
                       >
                         @if (isStackPending(stack.name)) {
                           <span class="btn__spinner"></span>
                         } @else {
                           ■ Stop All
+                        }
+                      </button>
+                    }
+                    @if (hasComposeFile(stack.name)) {
+                      <button
+                        class="btn btn--update"
+                        [disabled]="isStackUpdating(stack.name) || isStackPending(stack.name)"
+                        (click)="onUpdateStack(stack.name)"
+                        title="docker compose pull &amp;&amp; up -d"
+                      >
+                        @if (isStackUpdating(stack.name)) {
+                          <span class="btn__spinner"></span>
+                          <span>Aktualisiert…</span>
+                        } @else {
+                          ↓ Update
                         }
                       </button>
                     }

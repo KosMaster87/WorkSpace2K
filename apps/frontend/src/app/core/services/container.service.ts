@@ -10,7 +10,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared';
+import {
+  ComposeStack,
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  StackUpdateResult,
+} from '@workspace2k/shared';
 
 /**
  * Rohes API-Antwortformat für die Container-Liste.
@@ -18,6 +24,22 @@ import { ContainerStats, DockerService, DockerStack } from '@workspace2k/shared'
  */
 interface ApiContainersResponse {
   data: DockerService[];
+}
+
+/**
+ * Rohes API-Antwortformat für Compose-Stacks (Filesystem-Scan).
+ * @private
+ */
+interface ApiComposeStacksResponse {
+  data: ComposeStack[];
+}
+
+/**
+ * Rohes API-Antwortformat für Stack-Update-Ergebnis.
+ * @private
+ */
+interface ApiStackUpdateResponse {
+  data: StackUpdateResult;
 }
 
 /**
@@ -142,6 +164,31 @@ export class ContainerService {
    */
   stopStack(name: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/stop`, {});
+  }
+
+  /**
+   * Scannt das Server-Stacks-Verzeichnis nach Compose-Files (Filesystem-Scan).
+   * @description GET /api/docker/stacks/scan — gibt gefundene Compose-Stacks zurück.
+   *   Gibt leeres Array zurück wenn DOCKER_STACKS_PATH nicht existiert.
+   * @returns {Observable<ComposeStack[]>} Gefundene Compose-Stacks.
+   */
+  scanComposeStacks(): Observable<ComposeStack[]> {
+    return this.http
+      .get<ApiComposeStacksResponse>(`${this.apiUrl}/stacks/scan`)
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Aktualisiert einen Stack via docker compose pull && up -d.
+   * @description POST /api/docker/stacks/:name/update
+   *   Lädt neue Images und startet Container neu. Kann mehrere Minuten dauern.
+   * @param {string} name - Stack-Name (= Verzeichnisname in DOCKER_STACKS_PATH).
+   * @returns {Observable<StackUpdateResult>} Name + Ausgabe der Befehle.
+   */
+  updateStack(name: string): Observable<StackUpdateResult> {
+    return this.http
+      .post<ApiStackUpdateResponse>(`${this.apiUrl}/stacks/${encodeURIComponent(name)}/update`, {})
+      .pipe(map((res) => res.data));
   }
 
   /**

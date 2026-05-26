@@ -100,3 +100,30 @@ export const selectStackPendingNames = createSelector(
   selectDockerState,
   (state) => state.stackPendingNames,
 );
+
+/**
+ * Gibt die Namen der Stacks zurück, bei denen gerade ein Update läuft.
+ * @returns {string[]}
+ */
+export const selectStackUpdatingNames = createSelector(
+  selectDockerState,
+  (state) => state.stackUpdatingNames,
+);
+
+/**
+ * Gibt alle Compose-Stacks aus dem Filesystem-Scan zurück.
+ * @returns {ComposeStack[]}
+ */
+export const selectComposeStacks = createSelector(
+  selectDockerState,
+  (state) => state.composeStacks,
+);
+
+/**
+ * Gibt true zurück während der Filesystem-Scan läuft.
+ * @returns {boolean}
+ */
+export const selectComposeStacksLoading = createSelector(
+  selectDockerState,
+  (state) => state.composeStacksLoading,
+);

@@ -192,4 +192,39 @@ export const dockerReducer = createReducer<DockerState>(
     stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
     error,
   })),
+
+  // ── Stack updaten (docker compose pull + up -d) ──────────────────────
+  on(DockerActions.updateStack, (state, { name }) => ({
+    ...state,
+    stackUpdatingNames: [...state.stackUpdatingNames, name],
+    error: null,
+  })),
+
+  on(DockerActions.updateStackSuccess, (state, { name }) => ({
+    ...state,
+    stackUpdatingNames: state.stackUpdatingNames.filter((n) => n !== name),
+  })),
+
+  on(DockerActions.updateStackFailure, (state, { name, error }) => ({
+    ...state,
+    stackUpdatingNames: state.stackUpdatingNames.filter((n) => n !== name),
+    error,
+  })),
+
+  // ── Compose-Stacks scannen ────────────────────────────────────────────
+  on(DockerActions.scanComposeStacks, (state) => ({
+    ...state,
+    composeStacksLoading: true,
+  })),
+
+  on(DockerActions.scanComposeStacksSuccess, (state, { composeStacks }) => ({
+    ...state,
+    composeStacks,
+    composeStacksLoading: false,
+  })),
+
+  on(DockerActions.scanComposeStacksFailure, (state) => ({
+    ...state,
+    composeStacksLoading: false,
+  })),
 );

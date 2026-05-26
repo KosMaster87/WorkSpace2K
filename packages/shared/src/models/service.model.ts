@@ -57,6 +57,35 @@ export interface DockerStack {
 }
 
 /**
+ * Ein Compose-Stack der per Filesystem-Scan gefunden wurde.
+ * @description Ein Verzeichnis in DOCKER_STACKS_PATH das eine Compose-File enthält.
+ *   Wird von GET /api/docker/stacks/scan zurückgegeben.
+ *   `status` wird durch Abgleich mit laufenden Docker-Containern bestimmt.
+ * @interface ComposeStack
+ */
+export interface ComposeStack {
+  /** Verzeichnisname (= Stack-Name und Docker Compose Projekt-Name). */
+  name: string;
+  /** Absoluter Pfad zum Stack-Verzeichnis auf dem Server. */
+  path: string;
+  /** Name der gefundenen Compose-Datei (z.B. 'docker-compose.yml'). */
+  composeFile: string;
+  /** Aggregierter Laufstatus aller Container des Stacks. */
+  status: ServiceStatus;
+}
+
+/**
+ * Ergebnis eines Stack-Updates (docker compose pull + up -d).
+ * @interface StackUpdateResult
+ */
+export interface StackUpdateResult {
+  /** Stack-Name. */
+  name: string;
+  /** Kombinierte stdout+stderr Ausgabe des Compose-Befehls. */
+  output: string;
+}
+
+/**
  * Laufzeit-Statistiken eines Containers.
  * @description Wird von GET /api/docker/containers/:id/stats zurückgegeben.
  *   Backend berechnet CPU via (cpu_delta / system_delta) * online_cpus * 100.

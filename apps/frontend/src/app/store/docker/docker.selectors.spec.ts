@@ -10,16 +10,24 @@ import {
   selectAllLogs,
   selectAllStacks,
   selectAllStats,
+  selectComposeStacks,
   selectDockerError,
   selectDockerLoading,
   selectLogsPendingIds,
   selectPendingIds,
   selectRunningCount,
   selectStackPendingNames,
+  selectStackUpdatingNames,
   selectStacksLoading,
   selectStoppedCount,
 } from './docker.selectors';
-import { ContainerStats, DockerService, DockerStack, DockerState } from './docker.state';
+import {
+  ComposeStack,
+  ContainerStats,
+  DockerService,
+  DockerStack,
+  DockerState,
+} from './docker.state';
 
 const running: DockerService = {
   id: 'c1',
@@ -52,6 +60,9 @@ const buildState = (partial: Partial<DockerState>): { docker: DockerState } => (
     stacks: [],
     stacksLoading: false,
     stackPendingNames: [],
+    stackUpdatingNames: [],
+    composeStacks: [],
+    composeStacksLoading: false,
     ...partial,
   },
 });
@@ -210,6 +221,41 @@ describe('Docker Selectors', () => {
     it('should return pending stack names', () => {
       expect(selectStackPendingNames(buildState({ stackPendingNames: ['vaultwarden'] }))).toEqual([
         'vaultwarden',
+      ]);
+    });
+  });
+
+  // ── selectStackUpdatingNames ───────────────────────────────────────────────
+
+  describe('selectStackUpdatingNames', () => {
+    it('should return empty array on initial state', () => {
+      expect(selectStackUpdatingNames(buildState({}))).toEqual([]);
+    });
+
+    it('should return updating stack names', () => {
+      expect(selectStackUpdatingNames(buildState({ stackUpdatingNames: ['n8n'] }))).toEqual([
+        'n8n',
+      ]);
+    });
+  });
+
+  // ── selectComposeStacks ────────────────────────────────────────────────────
+
+  describe('selectComposeStacks', () => {
+    const mockComposeStack: ComposeStack = {
+      name: 'vaultwarden',
+      path: '/opt/stacks/vaultwarden',
+      composeFile: 'docker-compose.yml',
+      status: 'running',
+    };
+
+    it('should return empty array on initial state', () => {
+      expect(selectComposeStacks(buildState({}))).toEqual([]);
+    });
+
+    it('should return compose stacks from filesystem scan', () => {
+      expect(selectComposeStacks(buildState({ composeStacks: [mockComposeStack] }))).toEqual([
+        mockComposeStack,
       ]);
     });
   });

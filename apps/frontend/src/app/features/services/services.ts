@@ -19,10 +19,12 @@ import { DockerActions } from '../../store/docker/docker.actions';
 import {
   selectAllContainers,
   selectAllStacks,
+  selectComposeStacks,
   selectDockerError,
   selectDockerLoading,
   selectPendingIds,
   selectStackPendingNames,
+  selectStackUpdatingNames,
   selectStacksLoading,
 } from '../../store/docker/docker.selectors';
 
@@ -68,6 +70,12 @@ export class ServicesComponent implements OnInit {
   /** Signal: Namen von Stacks mit laufenden Start/Stop-Requests. */
   readonly stackPendingNames = this.store.selectSignal(selectStackPendingNames);
 
+  /** Signal: Namen von Stacks, bei denen gerade ein Update (pull + up -d) läuft. */
+  readonly stackUpdatingNames = this.store.selectSignal(selectStackUpdatingNames);
+
+  /** Signal: Compose-Stacks aus dem Filesystem-Scan. */
+  readonly composeStacks = this.store.selectSignal(selectComposeStacks);
+
   /**
    * Live-Log-Zeilen pro Container-ID.
    * @description Wird vom SSE-Stream befüllt. Max. 500 Zeilen pro Container.
@@ -90,12 +98,15 @@ export class ServicesComponent implements OnInit {
   openLogsId: string | null = null;
 
   /**
-   * Setzt den Seitentitel und lädt Container (Stacks folgen automatisch via Effect).
+   * Setzt den Seitentitel, lädt Container und scannt Compose-Stacks.
+   * @description Container-Laden löst Stack-Laden via Effect aus.
+   *   Compose-Scan läuft parallel — gibt [] wenn /opt/stacks nicht existiert.
    * @returns {void}
    */
   ngOnInit(): void {
     this.appStore.setPageTitle('Services');
     this.store.dispatch(DockerActions.loadContainers());
+    this.store.dispatch(DockerActions.scanComposeStacks());
   }
 
   /**
@@ -254,6 +265,36 @@ export class ServicesComponent implements OnInit {
    */
   isStackPending(name: string): boolean {
     return this.stackPendingNames().includes(name);
+  }
+
+  /**
+   * Prüft ob für diesen Stack gerade ein Update läuft.
+   * @param {string} name - Stack-Name.
+   * @returns {boolean}
+   */
+  isStackUpdating(name: string): boolean {
+    return this.stackUpdatingNames().includes(name);
+  }
+
+  /**
+   * Prüft ob für diesen Stack ein Compose-File auf dem Server gefunden wurde.
+   * @description Vergleicht Stack-Name mit dem Filesystem-Scan-Ergebnis.
+   * @param {string} name - Stack-Name.
+   * @returns {boolean} true wenn Compose-File vorhanden → Update-Button sichtbar.
+   */
+  hasComposeFile(name: string): boolean {
+    return this.composeStacks().some((s) => s.name === name);
+  }
+
+  /**
+   * Dispatcht updateStack für einen Stack.
+   * @description Führt docker compose pull && up -d im Stack-Verzeichnis aus.
+   *   Kann mehrere Minuten dauern. Lädt danach Container und Stacks neu.
+   * @param {string} name - Stack-Name.
+   * @returns {void}
+   */
+  onUpdateStack(name: string): void {
+    this.store.dispatch(DockerActions.updateStack({ name }));
   }
 
   /**

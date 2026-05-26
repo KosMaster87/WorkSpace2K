@@ -12,6 +12,7 @@ Self-hosted Homelab Management Portal.
 | 04  | [04-ai-tooling-plan.md](04-ai-tooling-plan.md)           | AI-Tooling — Hooks, Dependabot, PR-Review        | ✅     |
 | 05  | [05-destinations-feature.md](05-destinations-feature.md) | Destinations — Service-Launcher, NgRx Store, API | ✅     |
 | 06  | [06-docker-konzept.md](06-docker-konzept.md)             | Docker-Management Konzept — Stacks, Roadmap      | ✅     |
+| 07  | [07-live-logs-sse.md](07-live-logs-sse.md)               | Live-Logs via SSE — fetch vs EventSource, Demux  | ✅     |
 
 ## Schnelllinks
 
