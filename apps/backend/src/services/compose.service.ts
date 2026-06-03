@@ -8,6 +8,7 @@
  */
 
 import { exec } from 'child_process';
+import { randomBytes } from 'crypto';
 import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
@@ -112,6 +113,55 @@ async function exists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Erzeugt einen sicheren Zufallswert passend zum Platzhalter-Typ.
+ * @description Wertet den Platzhalter aus `.env.example` aus und erzeugt
+ *   den passenden kryptografischen Zufallswert via Node.js crypto.
+ * @param {string} placeholder - Platzhalter-String aus der .env.example-Zeile.
+ * @returns {string} Generierter Geheimwert.
+ * @private
+ */
+function generateSecret(placeholder: string): string {
+  if (placeholder.includes('base64_48')) return randomBytes(48).toString('base64url');
+  if (placeholder.includes('hex_32')) return randomBytes(32).toString('hex');
+  if (placeholder.includes('hex_16')) return randomBytes(16).toString('hex');
+  return randomBytes(32).toString('hex'); // CHANGE_ME_STRONG_PASSWORD und unbekannte Typen
+}
+
+/**
+ * Generiert eine .env aus .env.example wenn noch keine .env existiert.
+ * @description Ersetzt alle `CHANGE_ME_*`-Platzhalter durch kryptografisch sichere
+ *   Zufallswerte. Zeilen ohne Platzhalter (z.B. `COUCHDB_USER=admin`) bleiben unverändert.
+ *   Wird vor jedem Stack-Start aufgerufen — idempotent wenn .env bereits existiert.
+ * @async
+ * @function generateEnvIfMissing
+ * @param {string} stackPath - Absoluter Pfad zum Stack-Verzeichnis.
+ * @returns {Promise<void>}
+ * @private
+ */
+async function generateEnvIfMissing(stackPath: string): Promise<void> {
+  const envPath = path.join(stackPath, '.env');
+  const examplePath = path.join(stackPath, '.env.example');
+  if (await exists(envPath)) return;
+  if (!(await exists(examplePath))) return;
+
+  const content = await readFile(examplePath, 'utf-8');
+  const generated = content
+    .split('\n')
+    .map((line) => {
+      if (line.startsWith('#') || !line.includes('=')) return line;
+      const eqIndex = line.indexOf('=');
+      const key = line.slice(0, eqIndex);
+      const value = line.slice(eqIndex + 1);
+      if (!value.includes('CHANGE_ME_')) return line;
+      return `${key}=${generateSecret(value)}`;
+    })
+    .join('\n');
+
+  await writeFile(envPath, generated, 'utf-8');
+  console.log(`[compose] .env für Stack '${path.basename(stackPath)}' automatisch generiert`);
 }
 
 /**
@@ -280,6 +330,7 @@ export async function findStackPath(name: string): Promise<string> {
  */
 export async function updateStack(name: string): Promise<StackUpdateResult> {
   const stackPath = await findStackPath(name);
+  await generateEnvIfMissing(stackPath);
   const result = await execComposeBackground(
     'docker compose pull && docker compose up -d',
     stackPath,
@@ -327,6 +378,7 @@ export async function getComposeContent(name: string): Promise<string> {
  */
 export async function composeUpStack(name: string): Promise<StackUpdateResult> {
   const stackPath = await findStackPath(name);
+  await generateEnvIfMissing(stackPath);
   const result = await execComposeBackground('docker compose up -d', stackPath);
   const output =
     result !== null
