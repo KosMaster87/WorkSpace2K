@@ -174,7 +174,7 @@ async function createProxyHost(
     // NPM v2: Booleans als 0/1 — true/false wird teils als ungültig abgewiesen
     block_exploits: 1,
     allow_websocket_upgrade: websockets ? 1 : 0,
-    http2_support: 0,
+    http2_support: 1,
     // HSTS deaktiviert — NPM-Einschränkung: HSTS erfordert Force SSL.
     // Cloudflare erzwingt HTTPS bereits auf Browser-Ebene.
     hsts_enabled: 0,

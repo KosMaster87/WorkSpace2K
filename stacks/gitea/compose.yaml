@@ -9,6 +9,9 @@ services:
       - USER_UID=1000
       - USER_GID=1000
       - GITEA__time__DEFAULT_UTC_OFFSET=+2
+      # SSH-Port auf 222 setzen — spiegelt das Port-Mapping 222:22 wider.
+      # Ohne diese Variable trägt Gitea Port 22 in Clone-URLs ein → falscher Port.
+      - GITEA__server__SSH_PORT=222
 
     volumes:
       - gitea_data:/data
