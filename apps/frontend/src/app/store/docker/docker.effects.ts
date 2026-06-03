@@ -15,9 +15,22 @@ import {
   DockerStack,
   StackUpdateResult,
 } from '@workspace2k/shared';
-import { EMPTY, catchError, map, mergeMap, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, map, mergeMap, of, switchMap, timer } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
 import { DockerActions } from './docker.actions';
+
+/**
+ * Pollt den Container-Status periodisch im Hintergrund.
+ * @description Dispatcht alle 15 Sekunden loadContainers — unabhängig von User-Interaktion.
+ *   Damit erscheinen neu gestartete Container automatisch ohne manuellen Refresh.
+ *   loadStatsAfterContainersEffect und loadStacksAfterContainersEffect laufen danach
+ *   automatisch mit — Stats und Stacks bleiben ebenfalls aktuell.
+ * @returns {Observable<Action>} loadContainers alle 15 Sekunden.
+ */
+export const pollContainersEffect = createEffect(
+  () => timer(15_000, 15_000).pipe(map(() => DockerActions.loadContainers())),
+  { functional: true },
+);
 
 /**
  * Lädt alle Container und dispatcht Erfolg oder Fehler.
