@@ -29,7 +29,14 @@ services:
     cap_add:
       - NET_ADMIN
 
+    networks:
+      - npm_proxy  # noVNC (8006) über NPM erreichbar per Container-Name
+
     stop_grace_period: 2m
+
+networks:
+  npm_proxy:
+    external: true
 
 volumes:
   winboat_data:
