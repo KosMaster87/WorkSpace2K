@@ -123,14 +123,27 @@ Tokens und Mixins aus der Library verwenden, kein manuelles CSS schreiben.
 
 ```
 src/
-├── index.ts              Express-App, Middleware (helmet, cors, json), Routes registrieren
-├── routes/auth.routes.ts POST /api/auth/login, GET /api/auth/me
-├── controllers/auth.controller.ts
-├── middleware/auth.middleware.ts   JWT-Prüfung, erweitert Request um userId/userRole
-└── services/prisma.service.ts     PrismaClient Singleton
+├── index.ts                         Express-App, Middleware, Routes registrieren
+├── routes/
+│   ├── auth.routes.ts               POST /api/auth/login, GET /api/auth/me
+│   ├── docker.routes.ts             GET|POST /api/docker/containers|stacks
+│   ├── users.routes.ts              CRUD /api/users (Admin)
+│   └── destinations.routes.ts       CRUD /api/destinations
+├── controllers/
+│   ├── auth.controller.ts
+│   ├── docker.controller.ts
+│   ├── users.controller.ts
+│   └── destinations.controller.ts
+├── middleware/auth.middleware.ts     JWT-Prüfung, erweitert Request um userId/userRole
+└── services/
+    ├── prisma.service.ts            PrismaClient Singleton
+    ├── docker.service.ts            Docker API Client (Container-Status, Logs, Start/Stop)
+    ├── compose.service.ts           docker compose CLI — Scan, Start, Update, .env-Auto-Init
+    └── npm.service.ts               NPM API Client — Proxy Hosts automatisch anlegen
 ```
 
-Endpunkte: `POST /api/auth/login`, `GET /api/auth/me`, `GET /api/health`
+Endpunkte: `POST /api/auth/login`, `GET /api/auth/me`, `GET /api/health`,
+`GET /api/docker/containers`, `GET /api/docker/stacks`, `POST /api/docker/stacks/:name/start`
 
 Prisma v5 — Schema in `prisma/schema.prisma`. Nach Schema-Änderungen immer
 `npm run db:migrate` (neue Migration) und `npm run db:generate` (Client neu generieren).
