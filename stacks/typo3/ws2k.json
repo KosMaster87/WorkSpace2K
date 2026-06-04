@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "typo3", "container": "typo3", "port": 80, "websockets": false }
+  ]
+}

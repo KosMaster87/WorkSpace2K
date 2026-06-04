@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "winboat", "container": "winboat", "port": 8006, "websockets": true }
+  ]
+}

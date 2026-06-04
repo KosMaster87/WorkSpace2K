@@ -1,0 +1,5 @@
+{
+  "proxy": [
+    { "subdomain": "drupal", "container": "drupal", "port": 80, "websockets": false }
+  ]
+}

@@ -109,9 +109,60 @@
                         ✎ Compose
                       </button>
                     }
+                    @if (stackInfo(stack.name)) {
+                      <button
+                        class="btn btn--info"
+                        [class.btn--info-active]="openInfoStack() === stack.name"
+                        (click)="toggleInfo(stack.name)"
+                        title="Image-Größe und Zeitschätzung"
+                      >
+                        ℹ
+                      </button>
+                    }
                   }
                 </div>
               </div>
+
+              @if (openInfoStack() === stack.name) {
+                @let info = stackInfo(stack.name)!;
+                <div class="stack-info">
+                  <div class="stack-info__sizes">
+                    <span class="stack-info__item">
+                      <span class="stack-info__label">Download</span>
+                      <span class="stack-info__value"
+                        >~{{
+                          info.downloadMb >= 1000
+                            ? (info.downloadMb / 1000 | number: '1.1-1') + ' GB'
+                            : info.downloadMb + ' MB'
+                        }}</span
+                      >
+                    </span>
+                    <span class="stack-info__item">
+                      <span class="stack-info__label">Auf Disk</span>
+                      <span class="stack-info__value">~{{ info.diskGb }} GB</span>
+                    </span>
+                    <span class="stack-info__item">
+                      <span class="stack-info__label">Setup</span>
+                      <span class="stack-info__value">{{
+                        info.setupMinutes[0] === info.setupMinutes[1]
+                          ? info.setupMinutes[0] + ' Min'
+                          : info.setupMinutes[0] + '–' + info.setupMinutes[1] + ' Min'
+                      }}</span>
+                    </span>
+                  </div>
+                  <div class="stack-info__speeds">
+                    @for (preset of speedPresets; track preset.mbit) {
+                      <span class="stack-info__speed">
+                        <span class="stack-info__speed-label">{{ preset.label }}</span>
+                        <span class="stack-info__speed-value">{{ downloadTime(info.downloadMb, preset.mbit) }}</span>
+                      </span>
+                    }
+                  </div>
+                  @if (info.setupNote) {
+                    <p class="stack-info__note">{{ info.setupNote }}</p>
+                  }
+                </div>
+              }
 
               <table class="container-table container-table--compact">
                 <thead>

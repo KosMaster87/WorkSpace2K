@@ -12,11 +12,12 @@
  * @module ServicesComponent
  */
 
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { Subscription } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
+import { calcDownloadMinutes, SPEED_PRESETS, STACK_INFO, StackInfo } from './stack-info.config';
 import { AppStore } from '../../store/app/app.store';
 import { DockerActions } from '../../store/docker/docker.actions';
 import { DestinationsActions } from '../../store/destinations/destinations.actions';
@@ -87,6 +88,12 @@ export class ServicesComponent implements OnInit {
   // ── Compose-Editor State ────────────────────────────────────────────────────
 
   /** true = Editor-Overlay ist sichtbar. */
+  /** Stack-Name dessen Info-Panel gerade offen ist (null = keines). */
+  readonly openInfoStack = signal<string | null>(null);
+
+  /** Geschwindigkeits-Presets für die Download-Zeit-Tabelle. */
+  readonly speedPresets = SPEED_PRESETS;
+
   readonly editorOpen = signal(false);
 
   /** 'create' = neuer Stack, 'edit' = vorhandene Compose-Datei bearbeiten. */
@@ -337,6 +344,34 @@ export class ServicesComponent implements OnInit {
    */
   isStackStarting(name: string): boolean {
     return this.stackStartingNames().includes(name);
+  }
+
+  /**
+   * Gibt die Stack-Info für einen Stack zurück oder null wenn keine vorhanden.
+   * @param {string} name - Stack-Name.
+   * @returns {StackInfo | null}
+   */
+  stackInfo(name: string): StackInfo | null {
+    return STACK_INFO[name] ?? null;
+  }
+
+  /**
+   * Berechnet die Download-Zeit in Minuten bei gegebener Geschwindigkeit.
+   * @param {number} downloadMb - Image-Größe komprimiert in MB.
+   * @param {number} speedMbit - Verbindungsgeschwindigkeit in Mbit/s.
+   * @returns {string} Formatierte Zeit (z.B. "4 Min" oder "0.5 Min").
+   */
+  downloadTime(downloadMb: number, speedMbit: number): string {
+    const minutes = calcDownloadMinutes(downloadMb, speedMbit);
+    return minutes < 1 ? `${(minutes * 60) | 0} Sek` : `~${minutes} Min`;
+  }
+
+  /**
+   * Öffnet oder schließt das Info-Panel eines Stacks.
+   * @param {string} name - Stack-Name.
+   */
+  toggleInfo(name: string): void {
+    this.openInfoStack.update((current) => (current === name ? null : name));
   }
 
   /**
