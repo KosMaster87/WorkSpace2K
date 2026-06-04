@@ -139,7 +139,8 @@
                       class="dest-card__status"
                       [class.dest-card__status--running]="dest.containerStatus === 'running'"
                       [class.dest-card__status--stopped]="dest.containerStatus === 'stopped'"
-                    >{{ dest.containerStatus === 'running' ? '●' : '○' }}</span>
+                      >{{ dest.containerStatus === 'running' ? '●' : '○' }}</span
+                    >
                   }
                 </div>
                 @if (dest.description) {
