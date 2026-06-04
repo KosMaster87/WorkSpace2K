@@ -22,10 +22,12 @@ services:
             --generate-config \
             --server-name=matrix.dev2ksoftware.com \
             --report-stats=no
+        fi
+        if ! grep -q "enable_registration:" /data/homeserver.yaml; then
           echo "" >> /data/homeserver.yaml
           echo "enable_registration: true" >> /data/homeserver.yaml
           echo "enable_registration_without_verification: true" >> /data/homeserver.yaml
-          echo "homeserver.yaml generiert mit Registration aktiviert."
+          echo "Registration aktiviert."
         fi
         exec python -m synapse.app.homeserver --config-path /data/homeserver.yaml
 
