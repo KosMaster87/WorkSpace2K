@@ -348,7 +348,7 @@ describe('dockerReducer', () => {
       expect(state.stackPendingNames).not.toContain('vaultwarden');
     });
 
-    it('should update stack and containers status to running', () => {
+    it('should add name to stackStartingNames (no optimistic status update)', () => {
       const pending = {
         ...initialDockerState,
         stacks: [mockStack],
@@ -358,9 +358,12 @@ describe('dockerReducer', () => {
         pending,
         DockerActions.startStackSuccess({ name: 'vaultwarden' }),
       );
+      // Kein optimistisches 'running' — Polling zeigt echten Status.
+      // stackStartingNames zeigt UI-Indikator bis Polling den Stack als running erkennt.
+      expect(state.stackStartingNames).toContain('vaultwarden');
+      expect(state.stackPendingNames).not.toContain('vaultwarden');
       const stack = state.stacks.find((s) => s.name === 'vaultwarden');
-      expect(stack?.status).toBe('running');
-      stack?.containers.forEach((c) => expect(c.status).toBe('running'));
+      expect(stack?.status).toBe('unknown'); // Polling, nicht optimistisch
     });
   });
 
