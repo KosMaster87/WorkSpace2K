@@ -12,7 +12,7 @@
  * @module ServicesComponent
  */
 
-import { Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { Subscription } from 'rxjs';
