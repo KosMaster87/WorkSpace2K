@@ -372,6 +372,34 @@
     border-left: 3px solid #f59e0b;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
+
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  &__steps-title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__steps-list {
+    margin: 0;
+    padding-left: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+
+    li {
+      font-size: var(--font-size-xs);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+  }
 }
 
 .btn__spinner--inline {
