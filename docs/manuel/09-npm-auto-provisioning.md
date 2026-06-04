@@ -26,9 +26,7 @@ Jedes Stack-Verzeichnis kann optional eine `ws2k.json` enthalten:
 
 ```json
 {
-  "proxy": [
-    { "subdomain": "gitea", "container": "gitea", "port": 3000, "websockets": true }
-  ]
+  "proxy": [{ "subdomain": "gitea", "container": "gitea", "port": 3000, "websockets": true }]
 }
 ```
 
@@ -37,24 +35,24 @@ Mehrere Einträge pro Stack werden unterstützt (Beispiel Matrix):
 ```json
 {
   "proxy": [
-    { "subdomain": "matrix",  "container": "synapse",  "port": 8008, "websockets": true },
-    { "subdomain": "element", "container": "element",  "port": 80,   "websockets": true }
+    { "subdomain": "matrix", "container": "synapse", "port": 8008, "websockets": true },
+    { "subdomain": "element", "container": "element", "port": 80, "websockets": true }
   ]
 }
 ```
 
 ### Alle konfigurierten Stacks
 
-| Stack           | Subdomain  | Container        | Port | Websockets |
-| --------------- | ---------- | ---------------- | ---- | ---------- |
-| gitea           | gitea      | gitea            | 3000 | ✅         |
-| vaultwarden     | vaultwarden| vaultwarden      | 80   | ✅         |
-| n8n             | n8n        | n8n              | 5678 | ✅         |
-| nextcloud       | nextcloud  | nextcloud        | 80   | ❌         |
-| gitlab          | gitlab     | gitlab           | 80   | ✅         |
-| matrix          | matrix     | synapse          | 8008 | ✅         |
-| matrix          | element    | element          | 80   | ✅         |
-| obsidian-live…  | obsidian   | obsidian-couchdb | 5984 | ❌         |
+| Stack          | Subdomain   | Container        | Port | Websockets |
+| -------------- | ----------- | ---------------- | ---- | ---------- |
+| gitea          | gitea       | gitea            | 3000 | ✅         |
+| vaultwarden    | vaultwarden | vaultwarden      | 80   | ✅         |
+| n8n            | n8n         | n8n              | 5678 | ✅         |
+| nextcloud      | nextcloud   | nextcloud        | 80   | ❌         |
+| gitlab         | gitlab      | gitlab           | 80   | ✅         |
+| matrix         | matrix      | synapse          | 8008 | ✅         |
+| matrix         | element     | element          | 80   | ✅         |
+| obsidian-live… | obsidian    | obsidian-couchdb | 5984 | ❌         |
 
 `winboat` hat keine `ws2k.json` — WinBoat exponiert Ports direkt (kein Reverse Proxy nötig für noVNC).
 
@@ -72,11 +70,13 @@ docker network create npm_proxy
 ```
 
 NPM-Container ins Netzwerk aufnehmen:
+
 ```bash
 docker network connect npm_proxy npm-npm-1
 ```
 
 NPM `compose.yaml` (`/opt/stacks/npm/compose.yaml`) um das externe Netzwerk erweitern:
+
 ```yaml
 services:
   npm:
@@ -225,7 +225,11 @@ docker logs ws2k-backend | grep '\[npm\]'
 2. `compose.yaml` erstellen mit `npm_proxy` Netzwerk
 3. `ws2k.json` anlegen:
    ```json
-   { "proxy": [{ "subdomain": "meinapp", "container": "meinapp", "port": 8080, "websockets": false }] }
+   {
+     "proxy": [
+       { "subdomain": "meinapp", "container": "meinapp", "port": 8080, "websockets": false }
+     ]
+   }
    ```
 4. Stack in WorkSpace2K starten → Proxy Host wird automatisch angelegt
 

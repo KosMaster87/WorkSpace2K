@@ -1,0 +1,32 @@
+# ── Mailcow — Self-hosted E-Mail Suite ──────────────────────────────────────
+#
+# Mailcow hat einen eigenen Installer und verwaltet sich selbst.
+# Es kann NICHT als normaler WorkSpace2K-Stack gestartet werden.
+#
+# Setup (einmalig, außerhalb von WorkSpace2K):
+#   cd /opt
+#   git clone https://github.com/mailcow/mailcow-dockerized
+#   cd mailcow-dockerized
+#   ./generate_config.sh
+#   # MAILCOW_HOSTNAME=mail.dev2ksoftware.com setzen
+#   docker compose up -d
+#
+# DNS-Voraussetzungen:
+#   MX  mail.dev2ksoftware.com  → mail.dev2ksoftware.com
+#   A   mail.dev2ksoftware.com  → <server-ip>
+#   Ports: 25, 465, 587, 110, 995, 143, 993 müssen am Router offen sein
+#
+# Web-UI nach Installation: https://mail.dev2ksoftware.com
+# Standard-Login: admin / moohoo
+#
+# Dieses compose.yaml dient nur als Dokumentation für WorkSpace2K.
+# Der echte Stack läuft unter: /opt/mailcow-dockerized/
+
+services:
+  mailcow-docs:
+    image: alpine:latest
+    container_name: mailcow-docs
+    restart: "no"
+    command: echo "Mailcow laeuft unter /opt/mailcow-dockerized/"
+    labels:
+      com.docker.compose.project: mailcow

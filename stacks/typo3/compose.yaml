@@ -1,0 +1,56 @@
+services:
+  # ── TYPO3 ────────────────────────────────────────────────────────────────
+  typo3:
+    image: martinhelmich/typo3:latest
+    container_name: typo3
+    restart: unless-stopped
+    environment:
+      TYPO3_DB_HOST: typo3-db
+      TYPO3_DB_PORT: 3306
+      TYPO3_DB_NAME: typo3
+      TYPO3_DB_USERNAME: typo3
+      TYPO3_DB_PASSWORD: ${DB_PASSWORD}
+      TYPO3_CONTEXT: Production
+      # Nach erstem Start: Admin-User anlegen über Setup-Wizard
+      # https://typo3.dev2ksoftware.com/typo3/install.php
+    volumes:
+      - typo3_data:/var/www/html/fileadmin
+      - typo3_uploads:/var/www/html/uploads
+      - typo3_typo3temp:/var/www/html/typo3temp
+    networks:
+      - npm_proxy
+      - typo3_internal
+    depends_on:
+      - typo3-db
+
+  # ── MySQL ─────────────────────────────────────────────────────────────────
+  typo3-db:
+    image: mysql:8.0
+    container_name: typo3-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: typo3
+      MYSQL_USER: typo3
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - typo3_db:/var/lib/mysql
+    networks:
+      - typo3_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  npm_proxy:
+    external: true
+  typo3_internal:
+    driver: bridge
+
+volumes:
+  typo3_data:
+  typo3_uploads:
+  typo3_typo3temp:
+  typo3_db:

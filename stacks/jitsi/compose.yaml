@@ -1,0 +1,134 @@
+services:
+  # ── Jitsi Meet — Self-hosted Video-Konferenzen ───────────────────────────
+  #
+  # ╔══════════════════════════════════════════════════════════════════════╗
+  # ║  ZWEI SZENARIEN — vor dem Start entscheiden:                        ║
+  # ║                                                                      ║
+  # ║  A) FritzBox direkt (kein Double-NAT) + Port-Forwarding             ║
+  # ║     → JVB direkt erreichbar via UDP 10000                           ║
+  # ║     → JVB_ADVERTISE_IPS = öffentliche IP des Routers                ║
+  # ║     → TURN_SERVER_* Variablen leer lassen                           ║
+  # ║     → Am Router: Port 10000/UDP → 192.168.188.25 weiterleiten       ║
+  # ║                                                                      ║
+  # ║  B) Double-NAT / Cloudflare Tunnel / kein UDP-Port-Forwarding       ║
+  # ║     → coturn Stack starten (stacks/coturn/)                         ║
+  # ║     → TURN_SERVER_* Variablen in .env ausfüllen                     ║
+  # ║     → JVB_ADVERTISE_IPS = Server LAN-IP (192.168.188.25)            ║
+  # ║     → Kein Port-Forwarding nötig                                    ║
+  # ╚══════════════════════════════════════════════════════════════════════╝
+  #
+  # Doku: docs/jitsi-setup.md (Obsidian Vault)
+
+  # ── Web-Frontend (nginx + Jitsi Meet JS) ─────────────────────────────
+  web:
+    image: jitsi/web:stable
+    container_name: jitsi-web
+    restart: unless-stopped
+    environment:
+      - PUBLIC_URL=https://meet.dev2ksoftware.com
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_BOSH_URL_BASE=http://jitsi-prosody:5280
+      - XMPP_MUC_DOMAIN=muc.meet.jitsi
+      - JICOFO_AUTH_USER=focus
+      - TZ=Europe/Berlin
+      - ENABLE_LETSENCRYPT=0
+      - ENABLE_HTTP_REDIRECT=0
+      - DISABLE_HTTPS=1
+      # TURN-Server (Szenario B — leer lassen für Szenario A)
+      - TURN_CREDENTIALS=${TURN_SECRET:-}
+      - TURN_HOST=${TURN_HOST:-}
+      - TURN_PORT=${TURN_PORT:-3478}
+      - TURN_TRANSPORT=${TURN_TRANSPORT:-tcp}
+    volumes:
+      - jitsi_web:/config
+    networks:
+      - npm_proxy
+      - jitsi_internal
+    depends_on:
+      - jitsi-prosody
+
+  # ── XMPP-Server (Prosody) ─────────────────────────────────────────────
+  jitsi-prosody:
+    image: jitsi/prosody:stable
+    container_name: jitsi-prosody
+    restart: unless-stopped
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_MUC_DOMAIN=muc.meet.jitsi
+      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
+      - XMPP_GUEST_DOMAIN=guest.meet.jitsi
+      - JICOFO_COMPONENT_SECRET=${JICOFO_COMPONENT_SECRET}
+      - JICOFO_AUTH_PASSWORD=${JICOFO_AUTH_PASSWORD}
+      - JVB_AUTH_PASSWORD=${JVB_AUTH_PASSWORD}
+      - TZ=Europe/Berlin
+    volumes:
+      - jitsi_prosody_config:/config
+      - jitsi_prosody_plugins:/prosody-plugins-custom
+    networks:
+      - jitsi_internal
+
+  # ── Conference Focus (Jicofo) ─────────────────────────────────────────
+  jitsi-jicofo:
+    image: jitsi/jicofo:stable
+    container_name: jitsi-jicofo
+    restart: unless-stopped
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
+      - XMPP_SERVER=jitsi-prosody
+      - JICOFO_COMPONENT_SECRET=${JICOFO_COMPONENT_SECRET}
+      - JICOFO_AUTH_USER=focus
+      - JICOFO_AUTH_PASSWORD=${JICOFO_AUTH_PASSWORD}
+      - JVB_BREWERY_MUC=jvbbrewery
+      - TZ=Europe/Berlin
+    networks:
+      - jitsi_internal
+    depends_on:
+      - jitsi-prosody
+
+  # ── Jitsi Videobridge (JVB) — Media-Server ────────────────────────────
+  jitsi-jvb:
+    image: jitsi/jvb:stable
+    container_name: jitsi-jvb
+    restart: unless-stopped
+    environment:
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
+      - XMPP_SERVER=jitsi-prosody
+      - JVB_AUTH_USER=jvb
+      - JVB_AUTH_PASSWORD=${JVB_AUTH_PASSWORD}
+      - JVB_BREWERY_MUC=jvbbrewery
+      - JVB_PORT=10000
+      - JVB_TCP_PORT=4443
+      # Szenario A: öffentliche Router-IP eintragen
+      # Szenario B: LAN-IP 192.168.188.25 (TURN-Server übernimmt Relay)
+      - JVB_ADVERTISE_IPS=${JVB_ADVERTISE_IPS}
+      # TURN-Server (Szenario B — leer lassen für Szenario A)
+      - JVB_STUN_SERVERS=${TURN_HOST:-stun.l.google.com:19302}
+      - TZ=Europe/Berlin
+    ports:
+      # Szenario A: UDP für Media-Streams (Router-Port-Forwarding erforderlich!)
+      # Szenario B: Diese Ports müssen nicht am Router offen sein
+      - "10000:10000/udp"
+      - "4443:4443/tcp"
+    volumes:
+      - jitsi_jvb:/config
+    networks:
+      - jitsi_internal
+    depends_on:
+      - jitsi-prosody
+
+networks:
+  npm_proxy:
+    external: true
+  jitsi_internal:
+    driver: bridge
+
+volumes:
+  jitsi_web:
+  jitsi_prosody_config:
+  jitsi_prosody_plugins:
+  jitsi_jvb:

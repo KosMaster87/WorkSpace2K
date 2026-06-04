@@ -1,0 +1,49 @@
+services:
+  # ── WordPress ────────────────────────────────────────────────────────────
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: wp_
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - npm_proxy
+      - wordpress_internal
+    depends_on:
+      - wordpress-db
+
+  # ── MySQL ─────────────────────────────────────────────────────────────────
+  wordpress-db:
+    image: mysql:8.0
+    container_name: wordpress-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - wordpress_db:/var/lib/mysql
+    networks:
+      - wordpress_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  npm_proxy:
+    external: true
+  wordpress_internal:
+    driver: bridge
+
+volumes:
+  wordpress_data:
+  wordpress_db:

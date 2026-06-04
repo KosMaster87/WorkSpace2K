@@ -1,0 +1,54 @@
+services:
+  # ── Drupal ───────────────────────────────────────────────────────────────
+  drupal:
+    image: drupal:latest
+    container_name: drupal
+    restart: unless-stopped
+    environment:
+      DRUPAL_DB_HOST: drupal-db
+      DRUPAL_DB_PORT: 5432
+      DRUPAL_DB_NAME: drupal
+      DRUPAL_DB_USER: drupal
+      DRUPAL_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - drupal_modules:/var/www/html/modules
+      - drupal_profiles:/var/www/html/profiles
+      - drupal_themes:/var/www/html/themes
+      - drupal_sites:/var/www/html/sites
+    networks:
+      - npm_proxy
+      - drupal_internal
+    depends_on:
+      - drupal-db
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  drupal-db:
+    image: postgres:17-alpine
+    container_name: drupal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: drupal
+      POSTGRES_USER: drupal
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - drupal_db:/var/lib/postgresql/data
+    networks:
+      - drupal_internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "drupal"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  npm_proxy:
+    external: true
+  drupal_internal:
+    driver: bridge
+
+volumes:
+  drupal_modules:
+  drupal_profiles:
+  drupal_themes:
+  drupal_sites:
+  drupal_db:

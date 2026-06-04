@@ -132,6 +132,49 @@ async function seedDestinations(): Promise<void> {
       description: 'Git, CI/CD, Issues, Merge Requests',
       sortOrder: 1,
     },
+    // ── CMS ───────────────────────────────────────────────────────────────────
+    {
+      name: 'WordPress',
+      url: 'https://wordpress.dev2ksoftware.com',
+      icon: '📝',
+      category: 'CMS',
+      description: 'WordPress — meistgenutztes CMS weltweit',
+      sortOrder: 0,
+    },
+    {
+      name: 'Drupal',
+      url: 'https://drupal.dev2ksoftware.com',
+      icon: '💧',
+      category: 'CMS',
+      description: 'Drupal — Enterprise CMS mit PostgreSQL',
+      sortOrder: 1,
+    },
+    {
+      name: 'TYPO3',
+      url: 'https://typo3.dev2ksoftware.com',
+      icon: '🔷',
+      category: 'CMS',
+      description: 'TYPO3 — Enterprise CMS, stark in Deutschland',
+      sortOrder: 2,
+    },
+    // ── Datenbank / Backend-as-a-Service ─────────────────────────────────────
+    {
+      name: 'Supabase',
+      url: 'https://supabase.dev2ksoftware.com',
+      icon: '⚡',
+      category: 'Entwicklung',
+      description: 'Open-Source Firebase Alternative — Datenbank, Auth, Storage, Realtime',
+      sortOrder: 0,
+    },
+    // ── E-Mail ────────────────────────────────────────────────────────────────
+    {
+      name: 'Mailcow',
+      url: 'https://mail.dev2ksoftware.com',
+      icon: '📧',
+      category: 'Infrastruktur',
+      description: 'Self-hosted E-Mail Suite — SMTP, IMAP, Webmail, Spam-Schutz',
+      sortOrder: 1,
+    },
     // ── Kommunikation ─────────────────────────────────────────────────────────
     {
       name: 'Element',
@@ -143,10 +186,10 @@ async function seedDestinations(): Promise<void> {
     },
     {
       name: 'Jitsi Meet',
-      url: 'https://meet.jit.si',
+      url: 'https://meet.dev2ksoftware.com',
       icon: '🎥',
       category: 'Kommunikation',
-      description: 'Video-Konferenzen (öffentliche Instanz)',
+      description: 'Self-hosted Video-Konferenzen',
       sortOrder: 1,
     },
   ];
