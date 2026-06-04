@@ -75,9 +75,8 @@ export const STACK_INFO: Record<string, StackInfo> = {
       'GitLab benötigt 3–5 Min. Initialisierung nach dem ersten Start. root-Passwort in Logs.',
     setupSteps: [
       '3–5 Min. warten bis GitLab vollständig gestartet ist',
-      'Initial-Passwort lesen (im Terminal): docker exec gitlab cat /etc/gitlab/initial_root_password',
       'https://gitlab.dev2ksoftware.com öffnen',
-      'Login: Benutzername "root" · Passwort aus Schritt 2',
+      'Login: Benutzername "root" · Passwort aus stacks/gitlab/.env (GITLAB_ROOT_PASSWORD)',
       'Sofort Passwort ändern: User-Icon → Edit Profile → Password',
     ],
   },

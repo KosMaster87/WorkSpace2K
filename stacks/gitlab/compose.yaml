@@ -6,6 +6,10 @@ services:
     hostname: gitlab.dev2ksoftware.com
 
     environment:
+      # Initiales Root-Passwort — wird beim ersten Start gesetzt.
+      # Wird aus .env geladen (auto-generiert via CHANGE_ME_STRONG_PASSWORD).
+      # Nach dem ersten Login in GitLab sofort ändern!
+      GITLAB_ROOT_PASSWORD: ${GITLAB_ROOT_PASSWORD}
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'https://gitlab.dev2ksoftware.com'
         # GitLabs internes nginx auf HTTP — NPM übernimmt SSL
