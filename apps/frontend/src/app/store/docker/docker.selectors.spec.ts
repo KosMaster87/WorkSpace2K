@@ -61,6 +61,7 @@ const buildState = (partial: Partial<DockerState>): { docker: DockerState } => (
     stacksLoading: false,
     stackPendingNames: [],
     stackUpdatingNames: [],
+    stackStartingNames: [],
     composeStacks: [],
     composeStacksLoading: false,
     ...partial,
