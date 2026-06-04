@@ -56,12 +56,6 @@ async function seedAdmin(): Promise<void> {
  * @function seedDestinations
  */
 async function seedDestinations(): Promise<void> {
-  const count = await prisma.destination.count();
-  if (count > 0) {
-    console.log(`✓ Destinations bereits vorhanden (${count}) — übersprungen.`);
-    return;
-  }
-
   const defaults = [
     // ── Infrastruktur ────────────────────────────────────────────────────────
     {
@@ -194,8 +188,18 @@ async function seedDestinations(): Promise<void> {
     },
   ];
 
-  await prisma.destination.createMany({ data: defaults });
-  console.log(`✓ ${defaults.length} Standard-Destinations angelegt.`);
+  const existingNames = new Set(
+    (await prisma.destination.findMany({ select: { name: true } })).map((d) => d.name),
+  );
+  const toCreate = defaults.filter((d) => !existingNames.has(d.name));
+
+  if (toCreate.length === 0) {
+    console.log(`✓ Alle Destinations bereits vorhanden (${existingNames.size}) — nichts zu tun.`);
+    return;
+  }
+
+  await prisma.destination.createMany({ data: toCreate });
+  console.log(`✓ ${toCreate.length} neue Destination(s) angelegt (${existingNames.size} bereits vorhanden).`);
   console.log('  → URLs bitte in der App an die eigene Infrastruktur anpassen.');
 }
 
