@@ -109,12 +109,12 @@ export const STACK_INFO: Record<string, StackInfo> = {
     downloadMb: 400,
     diskGb: 1.0,
     setupMinutes: [3, 5],
-    setupNote: 'Erster Start: "docker compose run --rm synapse generate" ausführen.',
+    setupNote: 'homeserver.yaml wird automatisch generiert — kein manueller Schritt nötig.',
     setupSteps: [
-      'Im Terminal: docker compose run --rm synapse generate',
-      'Stack danach normal starten: Start All',
-      'Element öffnen: https://element.dev2ksoftware.com',
-      'Neuen Account auf matrix.dev2ksoftware.com registrieren',
+      'Start All — Synapse generiert homeserver.yaml automatisch beim ersten Start',
+      'https://element.dev2ksoftware.com öffnen',
+      'Login → "Other homeserver" → matrix.dev2ksoftware.com eingeben',
+      'Account erstellen (Registration ist aktiviert)',
     ],
   },
   n8n: {

@@ -1,21 +1,39 @@
 services:
   # ── Synapse — Matrix Homeserver ──────────────────────────────────
+  #
+  # Automatischer Erststart:
+  # - homeserver.yaml wird auto-generiert wenn noch nicht vorhanden
+  # - Registration ist aktiviert (enable_registration: true)
+  # - Kein manuelles "docker compose run --rm synapse generate" nötig
   synapse:
     image: matrixdotorg/synapse:latest
     container_name: matrix
     restart: unless-stopped
 
-    environment:
-      - SYNAPSE_SERVER_NAME=matrix.dev2ksoftware.com
-      - SYNAPSE_REPORT_STATS=no
+    # Startup-Script: generiert Config beim ersten Start + patcht Registration
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ ! -f /data/homeserver.yaml ]; then
+          echo "Erster Start — generiere homeserver.yaml..."
+          python -m synapse.app.homeserver \
+            --config-path /data/homeserver.yaml \
+            --generate-config \
+            --server-name=matrix.dev2ksoftware.com \
+            --report-stats=no
+          echo "" >> /data/homeserver.yaml
+          echo "enable_registration: true" >> /data/homeserver.yaml
+          echo "enable_registration_without_verification: true" >> /data/homeserver.yaml
+          echo "homeserver.yaml generiert mit Registration aktiviert."
+        fi
+        exec python -m synapse.app.homeserver --config-path /data/homeserver.yaml
 
     volumes:
       - synapse_data:/data
 
     networks:
       - npm_proxy
-
-    # Erster Start: docker compose run --rm synapse generate
 
   # ── Element Web — Matrix Client ──────────────────────────────────
   element:
