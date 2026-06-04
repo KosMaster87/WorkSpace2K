@@ -1,0 +1,49 @@
+services:
+  # ── coturn — STUN/TURN Server für WebRTC ────────────────────────────────
+  #
+  # Wird von Jitsi Meet benötigt wenn:
+  #   a) Teilnehmer hinter NAT/Firewall sind die UDP blockieren
+  #   b) Double-NAT vorliegt (kein direktes Port-Forwarding möglich)
+  #   c) Der Cloudflare Tunnel genutzt wird (kein UDP-Support)
+  #
+  # Ohne coturn: Jitsi Meet startet, aber Video/Audio schlägt für externe
+  # Teilnehmer fehl wenn UDP 10000 nicht direkt erreichbar ist.
+  #
+  # Netzwerk: network_mode: host — coturn muss direkt auf die Netzwerk-
+  # Interfaces zugreifen um STUN (IP-Erkennung) korrekt zu betreiben.
+  # Das ist ein bekanntes Erfordernis für TURN-Server in Docker.
+  #
+  # Firewall: Port 3478 (UDP+TCP) muss geöffnet sein:
+  #   sudo firewall-cmd --permanent --add-port=3478/udp
+  #   sudo firewall-cmd --permanent --add-port=3478/tcp
+  #   sudo firewall-cmd --permanent --add-port=5349/tcp  # TURNS (TLS)
+  #   sudo firewall-cmd --permanent --add-port=49152-65535/udp  # Media-Relay
+  #   sudo firewall-cmd --reload
+  #
+  # DNS: turn.dev2ksoftware.com → Server-IP (A-Record in Cloudflare)
+  # Achtung: Cloudflare-Proxy (orange Wolke) DEAKTIVIEREN für diesen Record!
+  # TURN braucht direkte IP-Verbindung, kein HTTP-Proxy.
+
+  coturn:
+    image: coturn/coturn:latest
+    container_name: coturn
+    restart: unless-stopped
+    network_mode: host
+    command: >
+      -n
+      --log-file=stdout
+      --min-port=49152
+      --max-port=65535
+      --realm=${TURN_REALM}
+      --use-auth-secret
+      --static-auth-secret=${TURN_SECRET}
+      --external-ip=${TURN_EXTERNAL_IP}
+      --no-multicast-peers
+      --no-cli
+      --no-tlsv1
+      --no-tlsv1_1
+    volumes:
+      - coturn_data:/var/lib/coturn
+
+volumes:
+  coturn_data:

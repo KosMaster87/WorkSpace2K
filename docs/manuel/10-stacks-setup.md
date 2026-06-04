@@ -7,16 +7,16 @@ im Stack-Verzeichnis oder einen manuellen Ersteinrichtungsschritt.
 
 ## Übersicht: Welcher Stack braucht was?
 
-| Stack           | `.env` nötig | Ersteinrichtung      | URL                                      |
-| --------------- | ------------ | -------------------- | ---------------------------------------- |
-| gitea           | ❌            | Setup-Wizard (Web)   | `https://gitea.dev2ksoftware.com`        |
-| vaultwarden     | ❌ (optional) | Registrierung (Web)  | `https://vaultwarden.dev2ksoftware.com`  |
-| n8n             | ✅            | Login (Web)          | `https://n8n.dev2ksoftware.com`          |
-| nextcloud       | ✅            | Setup-Wizard (Web)   | `https://nextcloud.dev2ksoftware.com`    |
-| gitlab          | ✅            | root-Passwort (Web)  | `https://gitlab.dev2ksoftware.com`       |
-| matrix          | ✅            | homeserver.yaml      | `https://matrix.dev2ksoftware.com`       |
-| obsidian-live…  | ❌            | CouchDB-Admin (Web)  | `https://obsidian.dev2ksoftware.com`     |
-| winboat         | ✅            | noVNC im Browser     | `https://winboat.dev2ksoftware.com`      |
+| Stack          | `.env` nötig  | Ersteinrichtung     | URL                                     |
+| -------------- | ------------- | ------------------- | --------------------------------------- |
+| gitea          | ❌            | Setup-Wizard (Web)  | `https://gitea.dev2ksoftware.com`       |
+| vaultwarden    | ❌ (optional) | Registrierung (Web) | `https://vaultwarden.dev2ksoftware.com` |
+| n8n            | ✅            | Login (Web)         | `https://n8n.dev2ksoftware.com`         |
+| nextcloud      | ✅            | Setup-Wizard (Web)  | `https://nextcloud.dev2ksoftware.com`   |
+| gitlab         | ✅            | root-Passwort (Web) | `https://gitlab.dev2ksoftware.com`      |
+| matrix         | ✅            | homeserver.yaml     | `https://matrix.dev2ksoftware.com`      |
+| obsidian-live… | ❌            | CouchDB-Admin (Web) | `https://obsidian.dev2ksoftware.com`    |
+| winboat        | ✅            | noVNC im Browser    | `https://winboat.dev2ksoftware.com`     |
 
 ---
 
@@ -26,12 +26,12 @@ im Stack-Verzeichnis oder einen manuellen Ersteinrichtungsschritt.
 
 Stack starten → `https://gitea.dev2ksoftware.com` aufrufen → Wizard:
 
-| Feld | Wert |
-|---|---|
-| Database Type | SQLite3 (einfachste Option) |
-| Server Domain | `gitea.dev2ksoftware.com` |
-| HTTP Port | `3000` |
-| Base URL | `https://gitea.dev2ksoftware.com/` |
+| Feld            | Wert                                |
+| --------------- | ----------------------------------- |
+| Database Type   | SQLite3 (einfachste Option)         |
+| Server Domain   | `gitea.dev2ksoftware.com`           |
+| HTTP Port       | `3000`                              |
+| Base URL        | `https://gitea.dev2ksoftware.com/`  |
 | SSH Server Port | `222` (nicht 22 — Host-Port belegt) |
 
 Admin-User anlegen: kein Leerzeichen im Username (z.B. `dev2k`).
@@ -92,6 +92,7 @@ NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.dev2ksoftware.com
 ```
 
 Secrets generieren:
+
 ```bash
 openssl rand -hex 16   # MYSQL_ROOT_PASSWORD
 openssl rand -hex 16   # MYSQL_PASSWORD
@@ -116,6 +117,7 @@ GITLAB_HOME=/opt/gitlab
 ```
 
 Verzeichnis anlegen:
+
 ```bash
 sudo mkdir -p /opt/gitlab/{config,logs,data}
 ```
@@ -123,6 +125,7 @@ sudo mkdir -p /opt/gitlab/{config,logs,data}
 Stack starten (erster Start dauert **3–5 Minuten** — großes Image, Initialisierung).
 
 Root-Passwort auslesen (nach erstem Start):
+
 ```bash
 docker exec gitlab grep 'Password:' /etc/gitlab/initial_root_password
 ```
@@ -173,6 +176,7 @@ POSTGRES_DB=synapse" > /opt/stacks/workspace2k/stacks/matrix/.env
 → `https://element.dev2ksoftware.com` — Element Web-Client
 
 Admin-User anlegen:
+
 ```bash
 docker exec synapse register_new_matrix_user \
   -u admin -p <passwort> -a \
@@ -193,6 +197,7 @@ Ersten Admin anlegen:
 → **„Fix this"** Banner oben klicken → Admin-User + Passwort setzen.
 
 In Obsidian LiveSync Plugin:
+
 - Remote URI: `https://obsidian.dev2ksoftware.com`
 - User/Password: die oben gesetzten CouchDB-Credentials
 - Database: `obsidian` (oder eigener Name)
@@ -220,9 +225,11 @@ DISK_SIZE=64G' > /opt/stacks/workspace2k/stacks/winboat/.env
 
 > ⚠️ WinBoat (dockur/windows) benötigt KVM-Virtualisierung.
 > Prüfen ob KVM verfügbar ist:
+>
 > ```bash
 > ls /dev/kvm && echo "KVM verfügbar" || echo "KVM fehlt"
 > ```
+>
 > Ohne KVM startet Windows nicht.
 
 Stack starten → `https://winboat.dev2ksoftware.com` → noVNC-Browser-Interface.
@@ -231,12 +238,14 @@ Windows-Installation dauert beim ersten Start **10–20 Minuten**.
 ### Combo: Browser + native Windows-Apps
 
 Für natives Fenster auf dem Host zusätzlich RDP aktivieren:
+
 ```env
 # .env ergänzen:
 RDP_ENABLED=yes
 ```
 
 Dann mit einem RDP-Client verbinden:
+
 ```
 Host: <server-ip>
 Port: 3389

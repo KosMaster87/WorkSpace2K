@@ -65,7 +65,7 @@ Das WorkSpace2K Frontend darf **nicht** ebenfalls Port 80 beanspruchen.
 ```yaml
 # compose.yaml — Frontend:
 ports:
-  - '4200:80'   # Host-Port 4200 → Container-Port 80 (nginx)
+  - '4200:80' # Host-Port 4200 → Container-Port 80 (nginx)
 ```
 
 NPM leitet `workspace2k.dev2ksoftware.com` → `localhost:4200` weiter.
@@ -105,6 +105,7 @@ SEED_ADMIN_PASSWORD=<sicheres-passwort>
 ```
 
 Secrets generieren:
+
 ```bash
 openssl rand -hex 32   # JWT_SECRET
 openssl rand -hex 16   # DB_PASSWORD
@@ -138,6 +139,7 @@ docker compose exec backend npm run db:seed:prod
 > `docker compose up -d backend`
 
 Der Seed legt 9 Standard-Destinations an:
+
 - **Infrastruktur:** Nginx Proxy Manager (`http://192.168.188.24:81`)
 - **Security:** Vaultwarden
 - **Produktivität:** Nextcloud, WinBoat (`https://winboat.dev2ksoftware.com` — Windows in Docker, noVNC)
@@ -154,20 +156,20 @@ URLs danach in WorkSpace2K → Destinations anpassen.
 1. NPM Web-UI → `http://<server-ip>:81`
 2. **Proxy Hosts → Add Proxy Host**
 
-| Feld             | Wert                            |
-| ---------------- | ------------------------------- |
-| Domain Names     | `workspace2k.dev2ksoftware.com` |
-| Scheme           | `http`                          |
+| Feld             | Wert                              |
+| ---------------- | --------------------------------- |
+| Domain Names     | `workspace2k.dev2ksoftware.com`   |
+| Scheme           | `http`                            |
 | Forward Hostname | `localhost` oder `192.168.188.24` |
-| Forward Port     | `4200`                          |
-| Websockets       | ✅                               |
+| Forward Port     | `4200`                            |
+| Websockets       | ✅                                |
 
 **SSL Tab:**
-| Feld            | Wert                  |
+| Feld | Wert |
 | --------------- | --------------------- |
 | SSL Certificate | Let's Encrypt (DNS-01) |
-| Force SSL       | ❌ (wegen Tunnel — sonst Redirect-Loop) |
-| HTTP/2 Support  | ✅                    |
+| Force SSL | ❌ (wegen Tunnel — sonst Redirect-Loop) |
+| HTTP/2 Support | ✅ |
 
 > ⚠️ **Force SSL muss deaktiviert sein** wenn Cloudflare Tunnel verwendet wird.
 
