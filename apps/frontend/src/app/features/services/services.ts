@@ -12,6 +12,7 @@
  * @module ServicesComponent
  */
 
+import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
@@ -48,6 +49,7 @@ import {
   selector: 'app-services',
   templateUrl: './services.html',
   styleUrl: './services.scss',
+  imports: [DecimalPipe],
 })
 export class ServicesComponent implements OnInit {
   private readonly store = inject(Store);

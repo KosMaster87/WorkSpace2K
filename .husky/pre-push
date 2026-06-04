@@ -3,6 +3,9 @@ echo "🧪 Checks vor dem Push..."
 echo "\n▶ Frontend Lint (ESLint)..."
 npm run lint --prefix apps/frontend || { echo "❌ Frontend Lint fehlgeschlagen — Push abgebrochen."; exit 1; }
 
+echo "\n▶ Frontend Build (Production)..."
+npm run build:prod --prefix apps/frontend || { echo "❌ Frontend Build fehlgeschlagen — Push abgebrochen."; exit 1; }
+
 echo "\n▶ Frontend Tests (Vitest)..."
 npm test --prefix apps/frontend || { echo "❌ Frontend Tests fehlgeschlagen — Push abgebrochen."; exit 1; }
 
