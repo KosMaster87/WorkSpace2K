@@ -181,10 +181,30 @@
     flex: 1;
   }
 
+  &__name-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
   &__name {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
+  }
+
+  &__status {
+    font-size: 0.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+
+    &--running {
+      color: var(--color-success, #22c55e);
+    }
+
+    &--stopped {
+      color: var(--text-muted);
+    }
   }
 
   &__desc {

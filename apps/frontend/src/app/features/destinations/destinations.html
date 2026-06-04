@@ -132,7 +132,16 @@
             >
               <div class="dest-card__icon">{{ dest.icon || '🔗' }}</div>
               <div class="dest-card__body">
-                <span class="dest-card__name">{{ dest.name }}</span>
+                <div class="dest-card__name-row">
+                  <span class="dest-card__name">{{ dest.name }}</span>
+                  @if (dest.containerStatus) {
+                    <span
+                      class="dest-card__status"
+                      [class.dest-card__status--running]="dest.containerStatus === 'running'"
+                      [class.dest-card__status--stopped]="dest.containerStatus === 'stopped'"
+                    >{{ dest.containerStatus === 'running' ? '●' : '○' }}</span>
+                  }
+                </div>
                 @if (dest.description) {
                   <span class="dest-card__desc">{{ dest.description }}</span>
                 }

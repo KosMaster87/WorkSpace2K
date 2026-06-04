@@ -72,7 +72,10 @@ export const dockerReducer = createReducer<DockerState>(
   // ── Container-Liste laden ──────────────────────────────────────────────
   on(DockerActions.loadContainers, (state) => ({
     ...state,
-    isLoading: true,
+    // isLoading nur beim ersten Laden (leerer Store) — Background-Polls laufen still.
+    // Verhindert dass isLoading-Signal alle 15s zweimal emittiert und Angular
+    // Change Detection unnötig auslöst.
+    isLoading: state.containers.length === 0,
     error: null,
   })),
 
