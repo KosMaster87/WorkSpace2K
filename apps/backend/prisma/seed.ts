@@ -85,10 +85,10 @@ async function seedDestinations(): Promise<void> {
     // ── Produktivität ─────────────────────────────────────────────────────────
     {
       name: 'Obsidian LiveSync',
-      url: 'https://obsidian.dev2ksoftware.com',
+      url: 'https://obsidian.dev2ksoftware.com/_utils/',
       icon: '🔮',
       category: 'Produktivität',
-      description: 'CouchDB für Obsidian LiveSync — Notizen zwischen Geräten synchronisieren',
+      description: 'CouchDB Fauxton Admin-UI — Obsidian LiveSync Datenbank verwalten',
       sortOrder: 0,
     },
     {
@@ -222,6 +222,11 @@ async function seedDestinations(): Promise<void> {
       name: 'Jitsi Meet',
       oldUrl: 'https://meet.jit.si',
       newUrl: 'https://meet.dev2ksoftware.com',
+    },
+    {
+      name: 'Obsidian LiveSync',
+      oldUrl: 'https://obsidian.dev2ksoftware.com',
+      newUrl: 'https://obsidian.dev2ksoftware.com/_utils/',
     },
   ];
 
