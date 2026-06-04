@@ -22,7 +22,7 @@ services:
   # ── Web-Frontend (nginx + Jitsi Meet JS) ─────────────────────────────
   web:
     image: jitsi/web:stable
-    container_name: jitsi-web
+    container_name: meet
     restart: unless-stopped
     environment:
       - PUBLIC_URL=https://meet.dev2ksoftware.com
