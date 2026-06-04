@@ -4,12 +4,65 @@
  *   Kein Seiteneffekt hier — nur pure Funktion (alter State + Action → neuer State).
  *   Stats: loadContainerStatsSuccess fügt Stats per ID in stats-Record ein.
  *   pendingIds: beim Start/Stop-Request hinzugefügt, bei Success/Failure entfernt.
+ *
+ *   Polling-Optimierung: loadContainersSuccess, loadStacksSuccess und
+ *   scanComposeStacksSuccess geben bei unverändertem Inhalt dieselbe State-Referenz
+ *   zurück. NgRx-Selektoren emittieren nur bei Referenzänderung — so lösen
+ *   periodische Polls keine unnötigen Component-Re-renders aus.
  * @module DockerReducer
  */
 
 import { createReducer, on } from '@ngrx/store';
+import { ComposeStack, DockerService, DockerStack } from './docker.state';
 import { DockerActions } from './docker.actions';
 import { DockerState, initialDockerState } from './docker.state';
+
+/**
+ * Prüft ob zwei Container-Listen inhaltlich gleich sind.
+ * @description Vergleicht ID, Status und Name — die einzigen Felder die sich
+ *   zwischen Polls ändern können. Reihenfolge muss identisch sein.
+ * @param {DockerService[]} a - Bestehende Liste.
+ * @param {DockerService[]} b - Neue Liste vom Server.
+ * @returns {boolean} true wenn kein Update nötig.
+ * @private
+ */
+function containersEqual(a: DockerService[], b: DockerService[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (c, i) => c.id === b[i].id && c.status === b[i].status && c.name === b[i].name,
+  );
+}
+
+/**
+ * Prüft ob zwei Stack-Listen inhaltlich gleich sind.
+ * @description Vergleicht Name, Status und Container-Anzahl pro Stack.
+ * @param {DockerStack[]} a - Bestehende Liste.
+ * @param {DockerStack[]} b - Neue Liste vom Server.
+ * @returns {boolean} true wenn kein Update nötig.
+ * @private
+ */
+function stacksEqual(a: DockerStack[], b: DockerStack[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (s, i) =>
+      s.name === b[i].name &&
+      s.status === b[i].status &&
+      s.containers.length === b[i].containers.length,
+  );
+}
+
+/**
+ * Prüft ob zwei ComposeStack-Listen inhaltlich gleich sind.
+ * @description Vergleicht Name und Status — reicht für Filesystem-Scan-Ergebnis.
+ * @param {ComposeStack[]} a - Bestehende Liste.
+ * @param {ComposeStack[]} b - Neue Liste vom Scan.
+ * @returns {boolean} true wenn kein Update nötig.
+ * @private
+ */
+function composeStacksEqual(a: ComposeStack[], b: ComposeStack[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((s, i) => s.name === b[i].name && s.status === b[i].status);
+}
 
 /**
  * Docker Feature Reducer.
@@ -25,11 +78,12 @@ export const dockerReducer = createReducer<DockerState>(
     error: null,
   })),
 
-  on(DockerActions.loadContainersSuccess, (state, { containers }) => ({
-    ...state,
-    containers,
-    isLoading: false,
-  })),
+  on(DockerActions.loadContainersSuccess, (state, { containers }) => {
+    if (containersEqual(state.containers, containers)) {
+      return { ...state, isLoading: false };
+    }
+    return { ...state, containers, isLoading: false };
+  }),
 
   on(DockerActions.loadContainersFailure, (state, { error }) => ({
     ...state,
@@ -129,11 +183,12 @@ export const dockerReducer = createReducer<DockerState>(
     stacksLoading: true,
   })),
 
-  on(DockerActions.loadStacksSuccess, (state, { stacks }) => ({
-    ...state,
-    stacks,
-    stacksLoading: false,
-  })),
+  on(DockerActions.loadStacksSuccess, (state, { stacks }) => {
+    if (stacksEqual(state.stacks, stacks)) {
+      return { ...state, stacksLoading: false };
+    }
+    return { ...state, stacks, stacksLoading: false };
+  }),
 
   on(DockerActions.loadStacksFailure, (state, { error }) => ({
     ...state,
@@ -217,11 +272,12 @@ export const dockerReducer = createReducer<DockerState>(
     composeStacksLoading: true,
   })),
 
-  on(DockerActions.scanComposeStacksSuccess, (state, { composeStacks }) => ({
-    ...state,
-    composeStacks,
-    composeStacksLoading: false,
-  })),
+  on(DockerActions.scanComposeStacksSuccess, (state, { composeStacks }) => {
+    if (composeStacksEqual(state.composeStacks, composeStacks)) {
+      return { ...state, composeStacksLoading: false };
+    }
+    return { ...state, composeStacks, composeStacksLoading: false };
+  }),
 
   on(DockerActions.scanComposeStacksFailure, (state) => ({
     ...state,
