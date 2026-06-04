@@ -28,9 +28,7 @@ import { DockerState, initialDockerState } from './docker.state';
  */
 function containersEqual(a: DockerService[], b: DockerService[]): boolean {
   if (a.length !== b.length) return false;
-  return a.every(
-    (c, i) => c.id === b[i].id && c.status === b[i].status && c.name === b[i].name,
-  );
+  return a.every((c, i) => c.id === b[i].id && c.status === b[i].status && c.name === b[i].name);
 }
 
 /**

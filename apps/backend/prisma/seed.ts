@@ -199,7 +199,9 @@ async function seedDestinations(): Promise<void> {
   }
 
   await prisma.destination.createMany({ data: toCreate });
-  console.log(`✓ ${toCreate.length} neue Destination(s) angelegt (${existingNames.size} bereits vorhanden).`);
+  console.log(
+    `✓ ${toCreate.length} neue Destination(s) angelegt (${existingNames.size} bereits vorhanden).`,
+  );
   console.log('  → URLs bitte in der App an die eigene Infrastruktur anpassen.');
 }
 
