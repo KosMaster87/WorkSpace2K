@@ -1,4 +1,7 @@
-echo "🧪 Tests vor dem Push..."
+echo "🧪 Checks vor dem Push..."
+
+echo "\n▶ Frontend Lint (ESLint)..."
+npm run lint --prefix apps/frontend || { echo "❌ Frontend Lint fehlgeschlagen — Push abgebrochen."; exit 1; }
 
 echo "\n▶ Frontend Tests (Vitest)..."
 npm test --prefix apps/frontend || { echo "❌ Frontend Tests fehlgeschlagen — Push abgebrochen."; exit 1; }
@@ -6,4 +9,4 @@ npm test --prefix apps/frontend || { echo "❌ Frontend Tests fehlgeschlagen —
 echo "\n▶ Backend Tests (Jest)..."
 npm test --prefix apps/backend || { echo "❌ Backend Tests fehlgeschlagen — Push abgebrochen."; exit 1; }
 
-echo "\n✅ Alle Tests bestanden — Push wird fortgesetzt."
+echo "\n✅ Alle Checks bestanden — Push wird fortgesetzt."
