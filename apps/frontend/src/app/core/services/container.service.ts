@@ -230,9 +230,18 @@ export class ContainerService {
    * @param {string} content - YAML-Inhalt der compose.yaml.
    * @returns {Observable<StackUpdateResult>} Name + Ausgabe des Deployments.
    */
-  createStack(name: string, content: string): Observable<StackUpdateResult> {
+  createStack(
+    name: string,
+    content: string,
+    extras?: { ws2k?: string; envExample?: string },
+  ): Observable<StackUpdateResult> {
     return this.http
-      .post<ApiStackUpdateResponse>(`${this.apiUrl}/stacks`, { name, content })
+      .post<ApiStackUpdateResponse>(`${this.apiUrl}/stacks`, {
+        name,
+        content,
+        ws2k: extras?.ws2k,
+        envExample: extras?.envExample,
+      })
       .pipe(map((res) => res.data));
   }
 

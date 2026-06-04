@@ -144,7 +144,12 @@ export async function saveAndDeployStack(req: Request, res: Response): Promise<v
  * @returns {Promise<void>}
  */
 export async function createStack(req: Request, res: Response): Promise<void> {
-  const { name, content } = req.body as { name?: string; content?: string };
+  const { name, content, ws2k, envExample } = req.body as {
+    name?: string;
+    content?: string;
+    ws2k?: string;
+    envExample?: string;
+  };
   if (typeof name !== 'string' || name.trim().length === 0) {
     res.status(400).json({ message: 'name ist erforderlich und darf nicht leer sein' });
     return;
@@ -154,7 +159,10 @@ export async function createStack(req: Request, res: Response): Promise<void> {
     return;
   }
   try {
-    const result = await composeService.createStack(name.trim(), content);
+    const result = await composeService.createStack(name.trim(), content, {
+      ws2k: typeof ws2k === 'string' ? ws2k : undefined,
+      envExample: typeof envExample === 'string' ? envExample : undefined,
+    });
     res.status(201).json({ data: result });
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode;
