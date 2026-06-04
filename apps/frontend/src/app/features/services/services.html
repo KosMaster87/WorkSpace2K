@@ -161,6 +161,16 @@
                   @if (info.setupNote) {
                     <p class="stack-info__note">{{ info.setupNote }}</p>
                   }
+                  @if (info.setupSteps && info.setupSteps.length > 0) {
+                    <div class="stack-info__steps">
+                      <span class="stack-info__steps-title">Ersteinrichtung</span>
+                      <ol class="stack-info__steps-list">
+                        @for (step of info.setupSteps; track $index) {
+                          <li>{{ step }}</li>
+                        }
+                      </ol>
+                    </div>
+                  }
                 </div>
               }
 
