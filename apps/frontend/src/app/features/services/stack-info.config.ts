@@ -55,12 +55,6 @@ export const STACK_INFO: Record<string, StackInfo> = {
     setupMinutes: [1, 1],
     setupNote: 'Startet sofort nach Konfiguration der .env.',
   },
-  drupal: {
-    downloadMb: 500,
-    diskGb: 1.5,
-    setupMinutes: [3, 5],
-    setupNote: 'Setup-Wizard im Browser — DB-Zugangsdaten eingeben.',
-  },
   gitea: {
     downloadMb: 300,
     diskGb: 0.8,
