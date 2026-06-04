@@ -66,7 +66,7 @@ async function seedDestinations(): Promise<void> {
     // ── Infrastruktur ────────────────────────────────────────────────────────
     {
       name: 'Nginx Proxy Manager',
-      url: 'http://192.168.188.24:81',
+      url: 'http://192.168.188.25:81',
       icon: '🔀',
       category: 'Infrastruktur',
       description: 'Reverse Proxy — verwaltet alle lokalen Domains und SSL',
@@ -82,6 +82,14 @@ async function seedDestinations(): Promise<void> {
       sortOrder: 0,
     },
     // ── Produktivität ─────────────────────────────────────────────────────────
+    {
+      name: 'Obsidian LiveSync',
+      url: 'https://obsidian.dev2ksoftware.com',
+      icon: '🔮',
+      category: 'Produktivität',
+      description: 'CouchDB für Obsidian LiveSync — Notizen zwischen Geräten synchronisieren',
+      sortOrder: 0,
+    },
     {
       name: 'Nextcloud',
       url: 'https://nextcloud.dev2ksoftware.com',
