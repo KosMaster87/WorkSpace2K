@@ -34,7 +34,7 @@ export const routes: Routes = [
     component: AppShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'destinations', pathMatch: 'full' },
       {
         path: 'dashboard',
         loadComponent: () =>

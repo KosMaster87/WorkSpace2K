@@ -72,7 +72,7 @@ export class DashboardComponent implements OnInit {
    * @returns {void}
    */
   ngOnInit(): void {
-    this.appStore.setPageTitle('Dashboard');
+    this.appStore.setPageTitle('Services Overview');
     this.store.dispatch(DockerActions.loadContainers());
   }
 }
