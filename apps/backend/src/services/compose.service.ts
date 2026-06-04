@@ -419,9 +419,21 @@ export async function saveAndDeployStack(
 }
 
 /**
+ * Optionale Zusatzdateien beim Erstellen eines Stacks.
+ * @interface CreateStackFiles
+ */
+export interface CreateStackFiles {
+  /** Inhalt der ws2k.json — NPM Proxy Host wird automatisch angelegt. */
+  ws2k?: string;
+  /** Inhalt der .env.example — Secrets werden beim ersten Start auto-generiert. */
+  envExample?: string;
+}
+
+/**
  * Erstellt einen neuen Stack: Verzeichnis anlegen + compose.yaml schreiben + docker compose up -d.
  * @description Erstellt das Stack-Verzeichnis unter dem ersten DOCKER_STACKS_PATH-Eintrag,
  *   schreibt den YAML-Inhalt als compose.yaml und startet den Stack.
+ *   Optional: ws2k.json (NPM Auto-Provisioning) und .env.example (Secret-Auto-Generierung).
  *   Validiert den Stack-Namen (nur a-z, 0-9, - und _).
  *   Fehler wenn Verzeichnis schon existiert (HTTP 409).
  *   Fehler wenn das primäre DOCKER_STACKS_PATH nicht existiert (HTTP 503).
@@ -429,13 +441,18 @@ export async function saveAndDeployStack(
  * @function createStack
  * @param {string} name - Neuer Stack-Name (nur a-z, 0-9, _ und -).
  * @param {string} content - YAML-Inhalt der compose.yaml.
+ * @param {CreateStackFiles} [files] - Optionale Zusatzdateien.
  * @returns {Promise<StackUpdateResult>} Name und kombinierte Ausgabe.
  * @throws {Error} statusCode 400 bei ungültigem Stack-Namen.
  * @throws {Error} statusCode 409 wenn Stack bereits existiert.
  * @throws {Error} statusCode 503 wenn primäres DOCKER_STACKS_PATH nicht existiert.
  * @throws {Error} Wenn docker compose fehlschlägt.
  */
-export async function createStack(name: string, content: string): Promise<StackUpdateResult> {
+export async function createStack(
+  name: string,
+  content: string,
+  files?: CreateStackFiles,
+): Promise<StackUpdateResult> {
   if (!/^[a-z0-9][a-z0-9_-]*$/.test(name)) {
     throw Object.assign(
       new Error(
@@ -457,6 +474,13 @@ export async function createStack(name: string, content: string): Promise<StackU
   }
   await mkdir(stackPath, { recursive: true });
   await writeFile(path.join(stackPath, 'compose.yaml'), content, 'utf-8');
+  if (files?.ws2k) {
+    await writeFile(path.join(stackPath, 'ws2k.json'), files.ws2k, 'utf-8');
+  }
+  if (files?.envExample) {
+    await writeFile(path.join(stackPath, '.env.example'), files.envExample, 'utf-8');
+  }
+  await generateEnvIfMissing(stackPath);
   const { stdout, stderr } = await execAsync('docker compose up -d', {
     cwd: stackPath,
     timeout: 5 * 60 * 1000,

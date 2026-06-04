@@ -19,6 +19,7 @@ import { Store } from '@ngrx/store';
 import { Subscription } from 'rxjs';
 import { ContainerService } from '../../core/services/container.service';
 import { calcDownloadMinutes, SPEED_PRESETS, STACK_INFO, StackInfo } from './stack-info.config';
+import { applyTemplate, STACK_TEMPLATES, StackTemplate } from './stack-templates.config';
 import { AppStore } from '../../store/app/app.store';
 import { DockerActions } from '../../store/docker/docker.actions';
 import { DestinationsActions } from '../../store/destinations/destinations.actions';
@@ -95,6 +96,12 @@ export class ServicesComponent implements OnInit {
 
   /** Geschwindigkeits-Presets für die Download-Zeit-Tabelle. */
   readonly speedPresets = SPEED_PRESETS;
+
+  /** Alle verfügbaren Stack-Templates. */
+  readonly stackTemplates = STACK_TEMPLATES;
+
+  /** Aktuell ausgewähltes Template (null = keines / manuell). */
+  readonly selectedTemplate = signal<StackTemplate | null>(null);
 
   readonly editorOpen = signal(false);
 
@@ -377,6 +384,39 @@ export class ServicesComponent implements OnInit {
   }
 
   /**
+   * Wählt ein Template aus und befüllt den Editor — Stack-Name-Prefix wird gesetzt.
+   * @param {StackTemplate | null} template - Template oder null für manuellen Modus.
+   */
+  selectTemplate(template: StackTemplate | null): void {
+    this.selectedTemplate.set(template);
+    if (template) {
+      const currentName = this.editorStackName();
+      const bare = currentName.startsWith(template.namePrefix + '-')
+        ? currentName.slice(template.namePrefix.length + 1)
+        : currentName;
+      const fullName = bare ? `${template.namePrefix}-${bare}` : '';
+      this.editorStackName.set(fullName);
+      this.editorContent.set(bare ? applyTemplate(template.compose, bare) : template.compose);
+    }
+  }
+
+  /**
+   * Aktualisiert Stack-Name und YAML live wenn ein Template aktiv ist.
+   * @description Setzt Stack-Name auf `<prefix>-<eingabe>` und ersetzt {{name}} im YAML.
+   * @param {string} rawName - Roheingabe des Users (ohne Prefix).
+   */
+  onTemplateNameInput(rawName: string): void {
+    const template = this.selectedTemplate();
+    if (!template) {
+      this.editorStackName.set(rawName);
+      return;
+    }
+    const clean = rawName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    this.editorStackName.set(clean ? `${template.namePrefix}-${clean}` : '');
+    this.editorContent.set(clean ? applyTemplate(template.compose, clean) : template.compose);
+  }
+
+  /**
    * Prüft ob für diesen Stack ein Compose-File auf dem Server gefunden wurde.
    * @description Vergleicht Stack-Name mit dem Filesystem-Scan-Ergebnis.
    * @param {string} name - Stack-Name.
@@ -461,6 +501,7 @@ export class ServicesComponent implements OnInit {
     this.editorOpen.set(false);
     this.editorError.set(null);
     this.deployOutput.set(null);
+    this.selectedTemplate.set(null);
   }
 
   /**
@@ -486,9 +527,19 @@ export class ServicesComponent implements OnInit {
     this.editorError.set(null);
     this.deployOutput.set(null);
 
+    const template = this.selectedTemplate();
+    const bare = template ? name.slice(template.namePrefix.length + 1) : name;
+    const templateExtras =
+      this.editorMode() === 'create' && template
+        ? {
+            ws2k: applyTemplate(template.ws2k, bare),
+            envExample: template.envExample,
+          }
+        : undefined;
+
     const request$ =
       this.editorMode() === 'create'
-        ? this.containerService.createStack(name, content)
+        ? this.containerService.createStack(name, content, templateExtras)
         : this.containerService.saveAndDeployStack(name, content);
 
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

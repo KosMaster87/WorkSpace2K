@@ -417,22 +417,80 @@
 
         <!-- Body -->
         <div class="compose-editor__body">
+          <!-- Template-Picker (nur im Create-Modus) -->
+          @if (editorMode() === 'create') {
+            <div class="compose-editor__field">
+              <label class="compose-editor__label">Vorlage (optional)</label>
+              <div class="template-picker">
+                <button
+                  class="template-btn"
+                  [class.template-btn--active]="selectedTemplate() === null"
+                  (click)="selectTemplate(null)"
+                  [disabled]="editorSaving()"
+                >
+                  ✏️ Manuell
+                </button>
+                @for (tpl of stackTemplates; track tpl.label) {
+                  <button
+                    class="template-btn"
+                    [class.template-btn--active]="selectedTemplate()?.label === tpl.label"
+                    (click)="selectTemplate(tpl)"
+                    [disabled]="editorSaving()"
+                    [title]="tpl.description"
+                  >
+                    {{ tpl.icon }} {{ tpl.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Stack-Name (nur im Create-Modus editierbar) -->
           @if (editorMode() === 'create') {
             <div class="compose-editor__field">
-              <label class="compose-editor__label" for="editor-name">Stack-Name</label>
-              <input
-                id="editor-name"
-                class="compose-editor__input"
-                type="text"
-                placeholder="z.B. uptime-kuma"
-                [value]="editorStackName()"
-                (input)="editorStackName.set($any($event.target).value)"
-                [disabled]="editorSaving()"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <span class="compose-editor__hint">Nur a–z, 0–9, - und _ erlaubt.</span>
+              <label class="compose-editor__label" for="editor-name">
+                @if (selectedTemplate()) {
+                  Kunden-Name → Stack: {{ editorStackName() || selectedTemplate()!.namePrefix + '-…' }}
+                } @else {
+                  Stack-Name
+                }
+              </label>
+              @if (selectedTemplate()) {
+                <input
+                  id="editor-name"
+                  class="compose-editor__input"
+                  type="text"
+                  [placeholder]="selectedTemplate()!.namePlaceholder"
+                  [value]="
+                    editorStackName().startsWith(selectedTemplate()!.namePrefix + '-')
+                      ? editorStackName().slice(selectedTemplate()!.namePrefix.length + 1)
+                      : editorStackName()
+                  "
+                  (input)="onTemplateNameInput($any($event.target).value)"
+                  [disabled]="editorSaving()"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              } @else {
+                <input
+                  id="editor-name"
+                  class="compose-editor__input"
+                  type="text"
+                  placeholder="z.B. uptime-kuma"
+                  [value]="editorStackName()"
+                  (input)="editorStackName.set($any($event.target).value)"
+                  [disabled]="editorSaving()"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              }
+              <span class="compose-editor__hint">
+                @if (selectedTemplate()) {
+                  Nur Buchstaben und Zahlen — Subdomain wird: {{ editorStackName() || '…' }}.dev2ksoftware.com
+                } @else {
+                  Nur a–z, 0–9, - und _ erlaubt.
+                }
+              </span>
             </div>
           }
 
