@@ -1,7 +1,7 @@
 services:
   couchdb:
     image: couchdb:latest
-    container_name: obsidian-couchdb
+    container_name: obsidian
     restart: unless-stopped
 
     environment:

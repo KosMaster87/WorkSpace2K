@@ -1,5 +1,5 @@
 {
   "proxy": [
-    { "subdomain": "obsidian", "container": "obsidian-couchdb", "port": 5984, "websockets": false }
+    { "subdomain": "obsidian", "container": "obsidian", "port": 5984, "websockets": false }
   ]
 }

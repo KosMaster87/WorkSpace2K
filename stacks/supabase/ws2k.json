@@ -1,5 +1,5 @@
 {
   "proxy": [
-    { "subdomain": "supabase", "container": "supabase-kong", "port": 8000, "websockets": true }
+    { "subdomain": "supabase", "container": "supabase", "port": 8000, "websockets": true }
   ]
 }

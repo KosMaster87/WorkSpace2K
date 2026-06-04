@@ -22,7 +22,7 @@ services:
   # ── Kong — API Gateway ───────────────────────────────────────────────────
   supabase-kong:
     image: kong:2.8.1
-    container_name: supabase-kong
+    container_name: supabase
     restart: unless-stopped
     environment:
       KONG_DATABASE: "off"

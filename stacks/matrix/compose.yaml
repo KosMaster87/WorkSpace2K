@@ -2,7 +2,7 @@ services:
   # ── Synapse — Matrix Homeserver ──────────────────────────────────
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: synapse
+    container_name: matrix
     restart: unless-stopped
 
     environment:
