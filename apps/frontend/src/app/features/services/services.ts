@@ -28,6 +28,7 @@ import {
   selectMergedStacks,
   selectPendingIds,
   selectStackPendingNames,
+  selectStackStartingNames,
   selectStackUpdatingNames,
   selectStacksLoading,
 } from '../../store/docker/docker.selectors';
@@ -76,6 +77,9 @@ export class ServicesComponent implements OnInit {
 
   /** Signal: Namen von Stacks, bei denen gerade ein Update (pull + up -d) läuft. */
   readonly stackUpdatingNames = this.store.selectSignal(selectStackUpdatingNames);
+
+  /** Signal: Namen von Stacks die gestartet wurden aber noch nicht in docker ps erscheinen (Image-Pull). */
+  readonly stackStartingNames = this.store.selectSignal(selectStackStartingNames);
 
   /** Signal: Compose-Stacks aus dem Filesystem-Scan. */
   readonly composeStacks = this.store.selectSignal(selectComposeStacks);
@@ -324,6 +328,15 @@ export class ServicesComponent implements OnInit {
    */
   isStackUpdating(name: string): boolean {
     return this.stackUpdatingNames().includes(name);
+  }
+
+  /**
+   * Prüft ob dieser Stack gestartet wurde aber noch Image-Pull läuft (noch nicht in docker ps).
+   * @param {string} name - Stack-Name.
+   * @returns {boolean}
+   */
+  isStackStarting(name: string): boolean {
+    return this.stackStartingNames().includes(name);
   }
 
   /**

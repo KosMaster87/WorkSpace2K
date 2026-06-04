@@ -46,6 +46,12 @@ export interface DockerState {
   stackPendingNames: string[];
   /** Namen von Stacks, bei denen gerade ein Update (pull + up -d) läuft. */
   stackUpdatingNames: string[];
+  /**
+   * Namen von Stacks, die gestartet wurden aber noch nicht in docker ps erscheinen.
+   * Typisch bei großen Images (GitLab, Matrix) die im Hintergrund gezogen werden.
+   * Wird gelöscht sobald Polling den Stack als 'running' erkennt.
+   */
+  stackStartingNames: string[];
   /** Compose-Stacks aus Filesystem-Scan (DOCKER_STACKS_PATH). */
   composeStacks: ComposeStack[];
   /** true während GET /api/docker/stacks/scan läuft. */
@@ -67,6 +73,7 @@ export const initialDockerState: DockerState = {
   stacksLoading: false,
   stackPendingNames: [],
   stackUpdatingNames: [],
+  stackStartingNames: [],
   composeStacks: [],
   composeStacksLoading: false,
 };

@@ -48,11 +48,17 @@
                   </span>
                 </div>
                 <div class="stack-card__actions">
-                  <span class="status-badge status-badge--{{ stack.status }}">
-                    {{ stack.status }}
-                  </span>
+                  @if (isStackStarting(stack.name)) {
+                    <span class="status-badge status-badge--starting">
+                      <span class="btn__spinner btn__spinner--inline"></span> Wird gestartet…
+                    </span>
+                  } @else {
+                    <span class="status-badge status-badge--{{ stack.status }}">
+                      {{ stack.status }}
+                    </span>
+                  }
                   @if (!isStandalone) {
-                    @if (stack.status !== 'running') {
+                    @if (stack.status !== 'running' && !isStackStarting(stack.name)) {
                       <button
                         class="btn btn--start"
                         [disabled]="isStackPending(stack.name) || isStackUpdating(stack.name)"
@@ -65,10 +71,12 @@
                         }
                       </button>
                     }
-                    @if (stack.status !== 'stopped') {
+                    @if (stack.status !== 'stopped' || isStackStarting(stack.name)) {
                       <button
                         class="btn btn--stop"
-                        [disabled]="isStackPending(stack.name) || isStackUpdating(stack.name)"
+                        [disabled]="
+                          isStackPending(stack.name) || isStackUpdating(stack.name) || isStackStarting(stack.name)
+                        "
                         (click)="onStopStack(stack.name)"
                       >
                         @if (isStackPending(stack.name)) {

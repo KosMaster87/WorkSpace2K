@@ -21,6 +21,13 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
  * @function seedAdmin
  */
 async function seedAdmin(): Promise<void> {
+  // Admin existiert bereits → überspringen (kein SEED_ADMIN_* nötig)
+  const existingAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  if (existingAdmin) {
+    console.log(`✓ Admin-User bereits vorhanden (${existingAdmin.email}) — übersprungen.`);
+    return;
+  }
+
   const email = process.env['SEED_ADMIN_EMAIL'];
   const plainPassword = process.env['SEED_ADMIN_PASSWORD'];
 
@@ -202,6 +209,32 @@ async function seedDestinations(): Promise<void> {
   console.log(
     `✓ ${toCreate.length} neue Destination(s) angelegt (${existingNames.size} bereits vorhanden).`,
   );
+
+  // Bekannte veraltete URLs korrigieren — nur wenn der aktuelle Wert abweicht.
+  // Schützt manuelle Anpassungen: wird nur geändert wenn URL genau dem alten Wert entspricht.
+  const urlFixes: { name: string; oldUrl: string; newUrl: string }[] = [
+    {
+      name: 'Nginx Proxy Manager',
+      oldUrl: 'http://192.168.188.24:81',
+      newUrl: 'http://192.168.188.25:81',
+    },
+    {
+      name: 'Jitsi Meet',
+      oldUrl: 'https://meet.jit.si',
+      newUrl: 'https://meet.dev2ksoftware.com',
+    },
+  ];
+
+  for (const fix of urlFixes) {
+    const updated = await prisma.destination.updateMany({
+      where: { name: fix.name, url: fix.oldUrl },
+      data: { url: fix.newUrl },
+    });
+    if (updated.count > 0) {
+      console.log(`✓ URL aktualisiert: "${fix.name}" → ${fix.newUrl}`);
+    }
+  }
+
   console.log('  → URLs bitte in der App an die eigene Infrastruktur anpassen.');
 }
 

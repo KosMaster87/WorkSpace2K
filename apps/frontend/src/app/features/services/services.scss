@@ -270,6 +270,25 @@
     background: color-mix(in srgb, #f59e0b 20%, transparent);
     color: #f59e0b;
   }
+
+  &--starting {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: color-mix(in srgb, #3b82f6 20%, transparent);
+    color: #3b82f6;
+  }
+}
+
+.btn__spinner--inline {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────────

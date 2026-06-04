@@ -112,6 +112,15 @@ export const selectStackUpdatingNames = createSelector(
 );
 
 /**
+ * Gibt die Namen der Stacks zurück die gestartet wurden aber noch nicht in docker ps erscheinen.
+ * @returns {string[]}
+ */
+export const selectStackStartingNames = createSelector(
+  selectDockerState,
+  (state) => state.stackStartingNames,
+);
+
+/**
  * Gibt alle Compose-Stacks aus dem Filesystem-Scan zurück.
  * @returns {ComposeStack[]}
  */

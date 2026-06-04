@@ -185,10 +185,22 @@ export const dockerReducer = createReducer<DockerState>(
   })),
 
   on(DockerActions.loadStacksSuccess, (state, { stacks }) => {
-    if (stacksEqual(state.stacks, stacks)) {
+    // Stacks die jetzt 'running' sind aus stackStartingNames entfernen
+    const nowRunning = new Set(stacks.filter((s) => s.status === 'running').map((s) => s.name));
+    const stackStartingNames = state.stackStartingNames.filter((n) => !nowRunning.has(n));
+
+    if (
+      stacksEqual(state.stacks, stacks) &&
+      stackStartingNames.length === state.stackStartingNames.length
+    ) {
       return { ...state, stacksLoading: false };
     }
-    return { ...state, stacks, stacksLoading: false };
+    return {
+      ...state,
+      stacks: stacksEqual(state.stacks, stacks) ? state.stacks : stacks,
+      stacksLoading: false,
+      stackStartingNames,
+    };
   }),
 
   on(DockerActions.loadStacksFailure, (state, { error }) => ({
@@ -206,20 +218,17 @@ export const dockerReducer = createReducer<DockerState>(
   on(DockerActions.startStackSuccess, (state, { name }) => ({
     ...state,
     stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
-    stacks: state.stacks.map((s) =>
-      s.name === name
-        ? {
-            ...s,
-            status: 'running' as const,
-            containers: s.containers.map((c) => ({ ...c, status: 'running' as const })),
-          }
-        : s,
-    ),
+    // Kein optimistisches 'running' — Image-Pull kann Minuten dauern.
+    // stackStartingNames zeigt "Wird gestartet…" bis Polling den Stack als running erkennt.
+    stackStartingNames: state.stackStartingNames.includes(name)
+      ? state.stackStartingNames
+      : [...state.stackStartingNames, name],
   })),
 
   on(DockerActions.startStackFailure, (state, { name, error }) => ({
     ...state,
     stackPendingNames: state.stackPendingNames.filter((n) => n !== name),
+    stackStartingNames: state.stackStartingNames.filter((n) => n !== name),
     error,
   })),
 
