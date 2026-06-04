@@ -26,6 +26,6 @@ export const adminGuard: CanActivateFn = () => {
 
   return store.select(selectIsAdmin).pipe(
     take(1),
-    map((isAdmin: boolean) => isAdmin || router.createUrlTree(['/dashboard'])),
+    map((isAdmin: boolean) => isAdmin || router.createUrlTree(['/destinations'])),
   );
 };

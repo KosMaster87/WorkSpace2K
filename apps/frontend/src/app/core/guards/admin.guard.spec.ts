@@ -48,6 +48,6 @@ describe('adminGuard', () => {
     );
 
     expect(result).toBeInstanceOf(UrlTree);
-    expect((result as UrlTree).toString()).toBe('/dashboard');
+    expect((result as UrlTree).toString()).toBe('/destinations');
   });
 });

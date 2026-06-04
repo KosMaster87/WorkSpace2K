@@ -51,7 +51,7 @@ export const loginSuccessEffect = createEffect(
     actions$.pipe(
       ofType(AuthActions.loginSuccess),
       tap(({ token }: { token: string }) => localStorage.setItem('ws2k_token', token)),
-      tap(() => void router.navigate(['/dashboard'])),
+      tap(() => void router.navigate(['/destinations'])),
     ),
   { functional: true, dispatch: false },
 );
