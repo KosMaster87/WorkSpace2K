@@ -34,6 +34,17 @@ const mockState: { auth: AuthState } = {
 };
 
 describe('Auth Selectors', () => {
+  beforeEach(() => {
+    // NgRx-Selektoren cachen Ergebnisse (Memoization) — zwischen Tests zurücksetzen
+    // damit keine State-Pollution zwischen Testfällen auftritt.
+    selectUser.release();
+    selectToken.release();
+    selectIsAuthenticated.release();
+    selectIsAdmin.release();
+    selectAuthLoading.release();
+    selectAuthError.release();
+    selectAuthResolved.release();
+  });
   describe('selectUser', () => {
     it('should return the user', () => {
       expect(selectUser(mockState)).toEqual(mockUser);

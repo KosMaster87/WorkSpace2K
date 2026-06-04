@@ -52,8 +52,8 @@ export class SidebarComponent {
   /** Alle Navigations-Items — Admin-only Items im Template via adminOnly filtern. */
   readonly navItems: NavItem[] = [
     { label: 'Destinations', icon: '🔗', route: '/destinations' },
-    { label: 'Services', icon: '🐳', route: '/docker' },
-    { label: 'Services Overview', icon: '⊞', route: '/dashboard' },
+    { label: 'Container', icon: '🐳', route: '/docker' },
+    { label: 'Services Overview', icon: '⊞', route: '/services-overview' },
     { label: 'Monitoring', icon: '📊', route: '/monitoring' },
     { label: 'Backups', icon: '💾', route: '/backups' },
     { label: 'Settings', icon: '⚡', route: '/settings', adminOnly: true },

@@ -35,8 +35,9 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'destinations', pathMatch: 'full' },
+      { path: 'dashboard', redirectTo: 'services-overview', pathMatch: 'full' },
       {
-        path: 'dashboard',
+        path: 'services-overview',
         loadComponent: () =>
           import('./features/dashboard/dashboard').then((m) => m.DashboardComponent),
       },
