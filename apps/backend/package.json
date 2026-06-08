@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/dockerode": "^3.3.38",
+    "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
